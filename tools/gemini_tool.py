@@ -11,8 +11,7 @@ from google.genai import types
 load_dotenv()
 logger = logging.getLogger(__name__)
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+from config import GROQ_API_KEY, GEMINI_API_KEY
 
 _groq_client = None
 _gemini_client = None

@@ -19,7 +19,11 @@ if sys.stderr.encoding != 'utf-8':
 load_dotenv()
 logger = logging.getLogger(__name__)
 
-REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN", "")
+from config import REPLICATE_API_TOKEN
+
+def get_replicate_token() -> str:
+    token = (os.getenv("REPLICATE_API_TOKEN") or "").strip().strip('"').strip("'")
+    return token if token else REPLICATE_API_TOKEN
 
 def _image_to_data_uri(image_path: Path) -> str:
     with open(image_path, "rb") as f:
@@ -30,7 +34,7 @@ def _image_to_data_uri(image_path: Path) -> str:
     return f"data:image/{ext};base64,{encoded}"
 
 def generate_video_minimax(prompt: str, first_frame_image: Path = None, output_path: Path = None, on_progress=None) -> Path:
-    token = os.getenv("REPLICATE_API_TOKEN", REPLICATE_API_TOKEN)
+    token = get_replicate_token()
     if not token:
         raise ValueError("REPLICATE_API_TOKEN is not set!")
 

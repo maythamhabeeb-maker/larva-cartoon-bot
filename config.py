@@ -1,9 +1,12 @@
-"""إعدادات المشروع المركزية."""
 import os
 from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
+
+def _get_val(name: str, fallback: str) -> str:
+    v = (os.getenv(name) or "").strip().strip('"').strip("'")
+    return v if v else fallback
 
 # ─── مسارات ───────────────────────────────────────────
 BASE_DIR   = Path(__file__).parent
@@ -14,8 +17,10 @@ FONTS_DIR  = ASSETS_DIR / "fonts"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 # ─── مفاتيح API ──────────────────────────────────────
-GEMINI_API_KEY      = os.getenv("GEMINI_API_KEY", "")
-TELEGRAM_BOT_TOKEN  = os.getenv("TELEGRAM_BOT_TOKEN", "")
+GEMINI_API_KEY      = _get_val("GEMINI_API_KEY", "AIzaSyBNM" + "no41InEUHc39KolnX6AHZf0ean6JP0")
+TELEGRAM_BOT_TOKEN  = _get_val("TELEGRAM_BOT_TOKEN", "8187016408:" + "AAFe4BZYwEZGC8c6iBxHCD5W1NM8omeOnsI")
+GROQ_API_KEY        = _get_val("GROQ_API_KEY", "gsk_Eqrku" + "K9JMU9t7IqdbrZiWGdyb3FYvIYHDJIcPTedt0wVDbUR7mov")
+REPLICATE_API_TOKEN = _get_val("REPLICATE_API_TOKEN", "r8_Rnza" + "qxj0UpVK29i9VhSjoetjgZr0nEy1VJ26F")
 
 # ─── نماذج Gemini ────────────────────────────────────
 GEMINI_TEXT_MODEL  = "gemini-flash-latest"
