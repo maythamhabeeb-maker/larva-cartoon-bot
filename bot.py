@@ -152,7 +152,33 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         logger.exception("Production error")
         await update.message.reply_text(f"❌ حدث خطأ أثناء الإنتاج:\n{str(e)[:250]}")
 
+def _start_health_check_server():
+    """خادم HTTP خفيف في الخلفية لإرضاء فحص Render Web Service."""
+    import os
+    import threading
+    from http.server import HTTPServer, BaseHTTPRequestHandler
+
+    class HealthHandler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"OK - Larva Bot Alive & Running")
+
+        def log_message(self, format, *args):
+            pass
+
+    port = int(os.environ.get("PORT", 10000))
+    try:
+        server = HTTPServer(("0.0.0.0", port), HealthHandler)
+        t = threading.Thread(target=server.serve_forever, daemon=True)
+        t.start()
+        print(f"✅ Health check server listening on port {port} for Render")
+    except Exception as e:
+        print(f"Health server error: {e}")
+
 def main() -> None:
+    _start_health_check_server()
+
     if not TELEGRAM_BOT_TOKEN:
         print("❌ TELEGRAM_BOT_TOKEN is missing in .env!")
         return
@@ -167,3 +193,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
