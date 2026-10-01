@@ -36,9 +36,8 @@ logger = logging.getLogger(__name__)
 
 MAIN_KEYBOARD = ReplyKeyboardMarkup(
     [
-        [KeyboardButton("🪰🐛 حلقة زوومي وبزّوز (سريعة وخاطفة)")],
-        [KeyboardButton("🎥 فيديو حركة 3D حقيقية (MiniMax Video)")],
-        [KeyboardButton("💡 اكتب فكرة مقلب من عندك"), KeyboardButton("ℹ️ عن الشخصيات والنظام")]
+        [KeyboardButton("🎥 توليد حلقة فيديو 3D متحركة")],
+        [KeyboardButton("💡 اكتب أي فكرة من عندك"), KeyboardButton("ℹ️ عن الشخصيات")]
     ],
     resize_keyboard=True
 )
@@ -80,21 +79,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         )
         return
 
-    # التحقق من نوع الطلب: فيديو متحرك كامل أم حلقة خاطفة
-    is_real_video = ("فيديو حركة 3D" in user_text or "MiniMax" in user_text)
-    
+    # أي برومبت أو رسالة يكتبها المستخدم تولد مباشرة فيديو 3D متحرك بالكامل
     is_random = (user_text in [
         "🐛 حلقة لارفا جديدة (مقلب مضحك)", 
         "🪰🐛 حلقة جديدة: مقلب زوومي وبزّوز",
         "🪰🐛 حلقة زوومي وبزّوز (سريعة وخاطفة)",
-        "🎥 فيديو حركة 3D حقيقية (MiniMax Video)"
+        "🎥 فيديو حركة 3D حقيقية (MiniMax Video)",
+        "🎥 توليد حلقة فيديو 3D متحركة"
     ])
     idea = None if is_random else user_text
     
-    if is_real_video:
-        status_msg = await update.message.reply_text("🎬 بدأت عملية توليد **فيديو حركة 3D حقيقية بالذكاء الاصطناعي (MiniMax)**... ثواني من فضلك...")
-    else:
-        status_msg = await update.message.reply_text("🎬 بدأت عملية إنتاج حلقة «زوومي وبزّوز»... ثواني من فضلك...")
+    status_msg = await update.message.reply_text("🎬 بدأت عملية توليد **فيديو أنيميشن 3D متحرك بالذكاء الاصطناعي**... دقيقة من فضلك...")
 
     progress_history = []
 
@@ -109,27 +104,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     loop = asyncio.get_event_loop()
 
     try:
-        if is_real_video:
-            from tools.replicate_video_tool import produce_full_motion_slapstick
-            video_path = await loop.run_in_executor(
-                None,
-                lambda: produce_full_motion_slapstick(
-                    idea=idea,
-                    on_progress=lambda msg: asyncio.run_coroutine_threadsafe(
-                        update_status(msg), loop
-                    ).result()
-                )
+        from tools.replicate_video_tool import produce_full_motion_slapstick
+        video_path = await loop.run_in_executor(
+            None,
+            lambda: produce_full_motion_slapstick(
+                idea=idea,
+                on_progress=lambda msg: asyncio.run_coroutine_threadsafe(
+                    update_status(msg), loop
+                ).result()
             )
-        else:
-            video_path = await loop.run_in_executor(
-                None,
-                lambda: slapstick_pipeline.run_slapstick_pipeline(
-                    idea=idea,
-                    on_progress=lambda msg: asyncio.run_coroutine_threadsafe(
-                        update_status(msg), loop
-                    ).result()
-                )
-            )
+        )
 
         await status_msg.edit_text("✅ اكتمل المونتاج بنجاح! جاري رفع الفيديو الآن إلى تليجرام... 🚀")
 
