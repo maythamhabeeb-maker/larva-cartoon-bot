@@ -36,7 +36,8 @@ logger = logging.getLogger(__name__)
 
 MAIN_KEYBOARD = ReplyKeyboardMarkup(
     [
-        [KeyboardButton("🪰🐛 حلقة جديدة: مقلب زوومي وبزّوز")],
+        [KeyboardButton("🪰🐛 حلقة زوومي وبزّوز (سريعة وخاطفة)")],
+        [KeyboardButton("🎥 فيديو حركة 3D حقيقية (MiniMax Video)")],
         [KeyboardButton("💡 اكتب فكرة مقلب من عندك"), KeyboardButton("ℹ️ عن الشخصيات والنظام")]
     ],
     resize_keyboard=True
@@ -79,17 +80,27 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         )
         return
 
-    # فكرة عشوائية أو مخصصة
-    is_random = (user_text in ["🐛 حلقة لارفا جديدة (مقلب مضحك)", "🪰🐛 حلقة جديدة: مقلب زوومي وبزّوز"])
+    # التحقق من نوع الطلب: فيديو متحرك كامل أم حلقة خاطفة
+    is_real_video = ("فيديو حركة 3D" in user_text or "MiniMax" in user_text)
+    
+    is_random = (user_text in [
+        "🐛 حلقة لارفا جديدة (مقلب مضحك)", 
+        "🪰🐛 حلقة جديدة: مقلب زوومي وبزّوز",
+        "🪰🐛 حلقة زوومي وبزّوز (سريعة وخاطفة)",
+        "🎥 فيديو حركة 3D حقيقية (MiniMax Video)"
+    ])
     idea = None if is_random else user_text
     
-    status_msg = await update.message.reply_text("🎬 بدأت عملية إنتاج حلقة «زوومي وبزّوز»... ثواني من فضلك...")
+    if is_real_video:
+        status_msg = await update.message.reply_text("🎬 بدأت عملية توليد **فيديو حركة 3D حقيقية بالذكاء الاصطناعي (MiniMax)**... ثواني من فضلك...")
+    else:
+        status_msg = await update.message.reply_text("🎬 بدأت عملية إنتاج حلقة «زوومي وبزّوز»... ثواني من فضلك...")
 
     progress_history = []
 
     async def update_status(text: str):
         progress_history.append(text)
-        current_display = "🎬 **مراحل إنتاج كارتون لارفا:**\n\n" + "\n".join(progress_history[-5:])
+        current_display = "🎬 **مراحل الإنتاج السينمائي:**\n\n" + "\n".join(progress_history[-5:])
         try:
             await status_msg.edit_text(current_display, parse_mode="Markdown")
         except Exception:
@@ -98,16 +109,27 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     loop = asyncio.get_event_loop()
 
     try:
-        # تشغيل خط الإنتاج في خلفية آمنة (Thread Pool)
-        video_path = await loop.run_in_executor(
-            None,
-            lambda: slapstick_pipeline.run_slapstick_pipeline(
-                idea=idea,
-                on_progress=lambda msg: asyncio.run_coroutine_threadsafe(
-                    update_status(msg), loop
-                ).result()
+        if is_real_video:
+            from tools.replicate_video_tool import produce_full_motion_slapstick
+            video_path = await loop.run_in_executor(
+                None,
+                lambda: produce_full_motion_slapstick(
+                    idea=idea,
+                    on_progress=lambda msg: asyncio.run_coroutine_threadsafe(
+                        update_status(msg), loop
+                    ).result()
+                )
             )
-        )
+        else:
+            video_path = await loop.run_in_executor(
+                None,
+                lambda: slapstick_pipeline.run_slapstick_pipeline(
+                    idea=idea,
+                    on_progress=lambda msg: asyncio.run_coroutine_threadsafe(
+                        update_status(msg), loop
+                    ).result()
+                )
+            )
 
         await status_msg.edit_text("✅ اكتمل المونتاج بنجاح! جاري رفع الفيديو الآن إلى تليجرام... 🚀")
 
