@@ -75,18 +75,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await info_command(update, context)
         return
 
-    if user_text == "📺 حلقة يوتيوب كاملة (قصة طويلة)":
+    if user_text in ["📺 حلقة يوتيوب كاملة (قصة طويلة)", "📺 حلقة كاملة (قصة متعددة المشاهد)", "حلقة كاملة"]:
+        context.user_data["selected_mode"] = "long_episode"
         await update.message.reply_text(
-            "📺 **نمط حلقة يوتيوب كاملة (قصة كارتون متكاملة):**\n\n"
-            "اكتب فكرة الحلقة الآن (مثلاً: *شجار زوومي وبزّوز على شريحة بيتزا ساخنة في المجاري* أو *معركة قوطية البيبسي الطائرة*)... أو اكتب *حلقة عشوائية*!",
+            "📺 **نمط حلقة كارتون كاملة (متعددة المشاهد والمقالب):**\n\n"
+            "اكتب فكرة الحلقة الآن (مثلاً: *شجار زوومي وبزّوز على شريحة بيتزا ساخنة في المجاري* أو *معركة قوطية البيبسي الطائرة*)... أو اكتب *حلقة عشوائية* وسيتولى المخرج تأليف وتصوير كافة المشاهد ودمجها لك!",
             reply_markup=MAIN_KEYBOARD,
             parse_mode="Markdown"
         )
         return
         
     if user_text in ["🐛 كارتون ومقالب لارفا 3D", "🐛 مقلب سريع (ريلز وشورتس)", "🪰🐛 حلقة جديدة: مقلب زوومي وبزّوز"]:
+        context.user_data["selected_mode"] = "larva"
         await update.message.reply_text(
-            "🐛 **نمط مقلب كارتون 3D سريع:**\n\n"
+            "🐛 **نمط مقلب كارتون 3D سريع (مشهد واحد ريلز):**\n\n"
             "اكتب فكرة المقلب الآن (مثلاً: *زوومي يتزحلق بقشرة موزة*)... أو اكتب كلمة *مقلب عشوائي*!",
             reply_markup=MAIN_KEYBOARD,
             parse_mode="Markdown"
@@ -94,6 +96,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         return
 
     if user_text == "🎬 فيديو سينمائي واقعي (Cinematic)":
+        context.user_data["selected_mode"] = "cinematic"
         await update.message.reply_text(
             "🎬 **نمط الفيديو السينمائي الواقعي 4K:**\n\n"
             "اكتب المشهد السينمائي الذي تريده (مثلاً: *سيارة رياضية مسرعة في طوكيو تحت المطر*)...",
@@ -103,6 +106,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         return
 
     if user_text in ["🐱 كارتون حيوانات وأبطال بيكسار", "🐱 كارتون حيوانات وبيكسار 3D"]:
+        context.user_data["selected_mode"] = "custom_cartoon"
         await update.message.reply_text(
             "🐱 **نمط كارتون بيكسار وديزني 3D:**\n\n"
             "اكتب فكرة الكارتون (مثلاً: *قطة صغيرة وكلب يلعبون بالكرة ويتزحلقون*)...",
@@ -112,6 +116,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         return
 
     if user_text == "⚔️ أنميشن وأنيمي ياباني (Anime)":
+        context.user_data["selected_mode"] = "anime"
         await update.message.reply_text(
             "⚔️ **نمط الأنمي الياباني الأسطوري:**\n\n"
             "اكتب فكرة مشهد الأنمي (مثلاً: *فارس نينجا يقاتل بسيف متوهج على سطح قلعة*)...",
@@ -129,22 +134,30 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         return
 
     # تحديد نمط الفيديو بذكاء
-    is_long_episode = any(k in user_text for k in ["طويلة", "يوتيوب", "كاملة", "قصة"])
-    mode = "larva"
-    if is_long_episode:
+    saved_mode = context.user_data.get("selected_mode")
+    is_long_kw = any(k in user_text for k in ["طويلة", "طويله", "يوتيوب", "كاملة", "كامله", "كاملى", "حلقة", "حلقه", "حلقى", "مشاهد", "مسلسل", "قصة", "قصه"])
+    
+    if saved_mode == "long_episode" or is_long_kw:
         mode = "long_episode"
+    elif saved_mode:
+        mode = saved_mode
     elif any(k in user_text for k in ["سينمائي", "واقعي", "سيارة", "طبيعة", "فيلم", "طوكيو", "دبي", "فضاء"]):
         mode = "cinematic"
     elif any(k in user_text for k in ["أنمي", "انمي", "نينجا", "سيف", "تنين", "ساموراي", "ياباني"]):
         mode = "anime"
     elif any(k in user_text for k in ["بيكسار", "ديزني", "قطة", "بزونة", "كلب", "أرنب", "حيوانات"]):
         mode = "custom_cartoon"
+    else:
+        mode = "larva"
 
-    is_random = user_text in ["مقلب عشوائي", "حلقة جديدة", "عشوائي", "حلقة عشوائية"]
+    # Reset selected mode after use
+    context.user_data["selected_mode"] = None
+
+    is_random = user_text in ["مقلب عشوائي", "حلقة جديدة", "عشوائي", "حلقة عشوائية", "حلقة كاملة عشوائية"]
     idea = None if is_random else user_text
     
     mode_names = {
-        "long_episode": "📺 حلقة يوتيوب كاملة متعددة المشاهد",
+        "long_episode": "📺 حلقة كارتون كاملة متعددة المشاهد",
         "larva": "🐛 مقلب كارتون لارفا 3D",
         "cinematic": "🎬 فيديو سينمائي واقعي 4K",
         "anime": "⚔️ أنمي ياباني أسطوري",
@@ -173,7 +186,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 None,
                 lambda: produce_long_cartoon_episode(
                     idea=idea,
-                    scene_count=5,
+                    scene_count=4,
                     on_progress=lambda msg: asyncio.run_coroutine_threadsafe(
                         update_status(msg), loop
                     ).result()
@@ -196,6 +209,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
         # إرسال الفيديو النهائي مع كابشن مخصص للنمط
         captions = {
+            "long_episode": "🎬 **حلقة كارتون لارفا 3D الكاملة جاهزة!**\n🍿 قصة كارتونية متكاملة من عدة مشاهد مدمجة.\n🔊 كوميديا صامتة + مؤثرات هزلية + موسيقى تصويرية كاملة.",
             "larva": "🎬 **حلقة كارتون لارفا 3D المتحركة جاهزة!**\n🐛 أبطال الحلقة: زوومي وبزّوز\n🔊 كوميديا صامتة بالأصوات والموسيقى الكارتونية.",
             "cinematic": "🎬 **المشهد السينمائي الواقعي 4K جاهز!**\n🍿 دقة سينمائية فائقة وحركة كاميرا احترافية.",
             "anime": "⚔️ **مشهد الأنمي الياباني الأسطوري جاهز!**\n🌸 أسلوب أنيميشن ياباني ناعم ومميز.",
