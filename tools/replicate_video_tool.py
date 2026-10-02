@@ -148,36 +148,31 @@ def produce_full_motion_slapstick(idea: str = None, mode: str = "larva", on_prog
     raw_video = generate_video_minimax(prompt=prompt, on_progress=on_progress)
     
     if on_progress:
-        on_progress("✂️ معالجة وتركيب الصوت والمونتاج النهائي على الفيديو...")
+        on_progress("✂️ تركيب الصوت والمونتاج النهائي على الفيديو (فوري)...")
         
-    clip = VideoFileClip(str(raw_video))
-    dur = clip.duration
-    
     sfx_dir = Path(__file__).resolve().parent.parent / "assets" / "sfx"
+    out_final = raw_video.parent / f"final_{raw_video.name}"
     
     if mode in ["larva", "custom_cartoon"]:
-        bgm = AudioFileClip(str(sfx_dir / "funny_bgm.wav")).subclipped(0, min(dur, 12.0)).with_effects([MultiplyVolume(0.4)])
-        boing = AudioFileClip(str(sfx_dir / "boing.wav")).with_start(1.0)
-        splat = AudioFileClip(str(sfx_dir / "splat.wav")).with_start(max(0.5, dur - 1.5))
-        mixed_audio = CompositeAudioClip([bgm, boing, splat])
-        final_video = clip.with_audio(mixed_audio)
+        import subprocess
+        import imageio_ffmpeg
+        ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+        bgm_file = sfx_dir / "funny_bgm.wav"
+        if bgm_file.exists():
+            cmd = [
+                ffmpeg_exe, "-y",
+                "-i", str(raw_video),
+                "-i", str(bgm_file),
+                "-c:v", "copy",
+                "-c:a", "aac",
+                "-shortest",
+                str(out_final)
+            ]
+            subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        else:
+            out_final = raw_video
     else:
-        final_video = clip
-    
-    out_final = raw_video.parent / f"final_{raw_video.name}"
-    final_video.write_videofile(
-        str(out_final),
-        fps=24,
-        codec="libx264",
-        audio_codec="aac",
-        logger=None
-    )
-    
-    try:
-        final_video.close()
-        clip.close()
-    except Exception:
-        pass
+        out_final = raw_video
         
     return out_final
 
