@@ -215,7 +215,7 @@ def generate_video_on_runpod(image_path: str, output_mp4_path: str, prompt_text:
                 "vae": ["3", 0],
                 "width": 832,
                 "height": 480,
-                "length": 33, # 33 frames at 16fps (~2s smooth loop)
+                "length": 81, # 81 frames at 16fps = 5 full cinematic seconds
                 "batch_size": 1
             },
             "class_type": "WanImageToVideo"
@@ -276,9 +276,9 @@ def generate_video_on_runpod(image_path: str, output_mp4_path: str, prompt_text:
         
     prompt_id = r.json().get("prompt_id")
     
-    # Poll for completion (Wan 2.1 takes ~30-40s on RTX 4090)
+    # Poll for completion (Wan 2.1 81 frames takes ~60-80s on RTX 4090)
     webp_bytes = None
-    for _ in range(120):
+    for _ in range(180):
         time.sleep(2)
         try:
             hr = requests.get(f"{target_url}/history/{prompt_id}", timeout=10)
