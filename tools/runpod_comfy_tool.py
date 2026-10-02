@@ -103,8 +103,21 @@ def generate_character_on_runpod(prompt_text: str, output_path: str, url: str = 
         },
         "7": {
             "inputs": {
-                "filename_prefix": "RunPod_Char",
-                "images": ["6", 0]
+                "model_name": "4x-UltraSharp.pth"
+            },
+            "class_type": "UpscaleModelLoader"
+        },
+        "8": {
+            "inputs": {
+                "upscale_model": ["7", 0],
+                "image": ["6", 0]
+            },
+            "class_type": "ImageUpscaleWithModel"
+        },
+        "9": {
+            "inputs": {
+                "filename_prefix": "RunPod_Char_4K",
+                "images": ["8", 0]
             },
             "class_type": "SaveImage"
         }
@@ -170,12 +183,12 @@ def generate_video_on_runpod(image_path: str, output_mp4_path: str, url: str = N
         },
         "3": {
             "inputs": {
-                "width": 512,
-                "height": 512,
+                "width": 1024,
+                "height": 576,
                 "video_frames": 25,
                 "motion_bucket_id": 127,
                 "fps": 12,
-                "augmentation_level": 0.0,
+                "augmentation_level": 0.04,
                 "clip_vision": ["2", 1],
                 "init_image": ["1", 0],
                 "vae": ["2", 2]
@@ -185,7 +198,7 @@ def generate_video_on_runpod(image_path: str, output_mp4_path: str, url: str = N
         "4": {
             "inputs": {
                 "seed": int(time.time() * 1000) % 10000000,
-                "steps": 20,
+                "steps": 25,
                 "cfg": 2.5,
                 "sampler_name": "euler",
                 "scheduler": "karras",
@@ -206,10 +219,10 @@ def generate_video_on_runpod(image_path: str, output_mp4_path: str, url: str = N
         },
         "6": {
             "inputs": {
-                "filename_prefix": "RunPod_SVD",
+                "filename_prefix": "RunPod_SVD_HD",
                 "fps": 12.0,
-                "lossless": False,
-                "quality": 85,
+                "lossless": True,
+                "quality": 100,
                 "method": "default",
                 "images": ["5", 0]
             },
@@ -245,15 +258,18 @@ def generate_video_on_runpod(image_path: str, output_mp4_path: str, url: str = N
     if not webp_bytes:
         raise TimeoutError("RunPod SVD video generation timed out")
         
-    # Convert webp to MP4
+    # Convert webp to 1080p High Definition MP4
     temp_webp = str(Path(output_mp4_path).with_suffix(".temp.webp"))
     Path(temp_webp).parent.mkdir(parents=True, exist_ok=True)
     with open(temp_webp, "wb") as f:
         f.write(webp_bytes)
         
     im = Image.open(temp_webp)
-    frames = [frame.copy().convert("RGB") for frame in ImageSequence.Iterator(im)]
-    imageio.mimsave(output_mp4_path, frames, fps=12)
+    raw_frames = [frame.copy().convert("RGB") for frame in ImageSequence.Iterator(im)]
+    
+    # Upscale every frame to crisp Full HD 1080p
+    hd_frames = [f.resize((1920, 1080), Image.Resampling.LANCZOS) for f in raw_frames]
+    imageio.mimsave(output_mp4_path, hd_frames, fps=12)
     
     if os.path.exists(temp_webp):
         try:
