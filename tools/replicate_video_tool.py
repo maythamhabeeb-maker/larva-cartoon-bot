@@ -34,29 +34,16 @@ def _image_to_data_uri(image_path: Path) -> str:
     return f"data:image/{ext};base64,{encoded}"
 
 def generate_video_minimax(prompt: str, first_frame_image: Path = None, output_path: Path = None, on_progress=None) -> Path:
-    token = get_replicate_token()
-    if not token:
-        raise ValueError("REPLICATE_API_TOKEN is not set!")
-
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
-        "Prefer": "wait"
-    }
-
-    input_payload = {
-        "prompt": prompt,
-        "prompt_optimizer": True
-    }
-
-    if first_frame_image and Path(first_frame_image).exists():
-        input_payload["first_frame_image"] = _image_to_data_uri(Path(first_frame_image))
-
+    """Redirected 100% to RunPod RTX 4090 - Replicate is completely disabled!"""
+    from tools.runpod_comfy_tool import generate_video_on_runpod, generate_character_on_runpod
     if on_progress:
-        on_progress("🎬 إرسال طلب الفيديو إلى محرك MiniMax / Hailuo العالمي...")
-
-    url = "https://api.replicate.com/v1/models/minimax/video-01/predictions"
-    resp = requests.post(url, headers=headers, json={"input": input_payload}, timeout=30)
+        on_progress("⚡ توليد المشهد على كارت الشاشة RunPod RTX 4090 (بدون أي تكلفة)...")
+    if not first_frame_image or not Path(first_frame_image).exists():
+        temp_img = str(Path(output_path).with_suffix(".init.png"))
+        generate_character_on_runpod(prompt, temp_img)
+        first_frame_image = temp_img
+    generate_video_on_runpod(str(first_frame_image), str(output_path))
+    return Path(output_path)
     
     if resp.status_code not in [200, 201, 202]:
         raise RuntimeError(f"Replicate API error ({resp.status_code}): {resp.text}")

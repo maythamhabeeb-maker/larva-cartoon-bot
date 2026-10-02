@@ -17,7 +17,7 @@ import imageio_ffmpeg
 
 from config import OUTPUT_DIR
 from agents.universal_studio_agent import create_universal_production_plan
-from tools.replicate_video_tool import generate_video_minimax
+from tools.runpod_comfy_tool import generate_video_on_runpod
 
 if sys.stdout.encoding != 'utf-8':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
@@ -77,11 +77,10 @@ def produce_universal_episode(idea: str = None, on_progress=None) -> Tuple[Path,
 
         out_scene_file = episode_dir / f"scene_{sc_num}.mp4"
         try:
-            generate_video_minimax(
-                prompt=f"{v_prompt}. High quality fluid motion, rich volumetric lighting, cinematic animation.",
-                first_frame_image=char_ref_path if has_ref_image else None,
-                output_path=out_scene_file,
-                on_progress=lambda m: progress(f"  [المشهد {sc_num}] {m}")
+            progress(f"  [المشهد {sc_num}] ⚡ توليد وتحريك المشهد على كارت الشاشة RunPod RTX 4090...")
+            generate_video_on_runpod(
+                image_path=str(char_ref_path) if has_ref_image else None,
+                output_mp4_path=str(out_scene_file)
             )
             generated_scenes.append(out_scene_file)
         except Exception as e:

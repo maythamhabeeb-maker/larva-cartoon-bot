@@ -271,14 +271,28 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 )
             )
         else:
-            from tools.replicate_video_tool import produce_full_motion_slapstick
+            # كافة الأنماط الأخرى تعمل 100% على كارت الشاشة RTX 4090 وبدون أي تكلفة خارجية
+            from tools.runpod_comfy_tool import generate_character_on_runpod, generate_video_on_runpod, add_cartoon_audio
+            import time
+            safe_progress("⚡ 1/3: جاري رسم وتصميم المشهد على كارت الشاشة RTX 4090...")
+            run_id = int(time.time())
+            char_ref_path = f"output/runpod_char_{run_id}.png"
+            char_prompt = idea if idea else "cute 3d cartoon character"
+            await loop.run_in_executor(
+                None,
+                lambda: generate_character_on_runpod(char_prompt, char_ref_path)
+            )
+            safe_progress("🎨 2/3: جاري تحريك الفيديو بنموذج SVD على كارت الـ RTX 4090...")
+            raw_video_path = f"output/runpod_raw_{run_id}.mp4"
+            await loop.run_in_executor(
+                None,
+                lambda: generate_video_on_runpod(char_ref_path, raw_video_path)
+            )
+            safe_progress("🔊 3/3: جاري تركيب المؤثرات الصوتية والموسيقى التصويرية...")
+            final_video_path = f"output/runpod_video_{run_id}.mp4"
             video_path = await loop.run_in_executor(
                 None,
-                lambda: produce_full_motion_slapstick(
-                    idea=idea,
-                    mode=mode,
-                    on_progress=safe_progress
-                )
+                lambda: add_cartoon_audio(raw_video_path, final_video_path)
             )
 
         await status_msg.edit_text("✅ اكتمل المونتاج بنجاح! جاري رفع الحلقة الآن إلى تليجرام... 🚀")
