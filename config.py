@@ -21,6 +21,7 @@ GEMINI_API_KEY      = _get_val("GEMINI_API_KEY", "AIzaSyBNM" + "no41InEUHc39Koln
 TELEGRAM_BOT_TOKEN  = _get_val("TELEGRAM_BOT_TOKEN", "8187016408:" + "AAFe4BZYwEZGC8c6iBxHCD5W1NM8omeOnsI")
 GROQ_API_KEY        = _get_val("GROQ_API_KEY", "gsk_Eqrku" + "K9JMU9t7IqdbrZiWGdyb3FYvIYHDJIcPTedt0wVDbUR7mov")
 REPLICATE_API_TOKEN = _get_val("REPLICATE_API_TOKEN", "r8_Rnza" + "qxj0UpVK29i9VhSjoetjgZr0nEy1VJ26F")
+RUNPOD_COMFY_URL    = _get_val("RUNPOD_COMFY_URL", "https://3x1kx5x27ttiq1-8188.proxy.runpod.net")
 
 # ─── نماذج Gemini ────────────────────────────────────
 GEMINI_TEXT_MODEL  = "gemini-flash-latest"

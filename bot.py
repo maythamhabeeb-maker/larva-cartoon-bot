@@ -36,9 +36,10 @@ logger = logging.getLogger(__name__)
 
 MAIN_KEYBOARD = ReplyKeyboardMarkup(
     [
-        [KeyboardButton("📺 حلقة يوتيوب كاملة (قصة طويلة)"), KeyboardButton("🐛 مقلب سريع (ريلز وشورتس)")],
+        [KeyboardButton("⚡ كارت شاشة RunPod RTX 4090"), KeyboardButton("📺 حلقة يوتيوب كاملة (قصة طويلة)")],
+        [KeyboardButton("🐛 مقلب سريع (ريلز وشورتس)"), KeyboardButton("🐱 كارتون حيوانات وبيكسار 3D")],
         [KeyboardButton("🎬 فيديو سينمائي واقعي (Cinematic)"), KeyboardButton("⚔️ أنميشن وأنيمي ياباني (Anime)")],
-        [KeyboardButton("🐱 كارتون حيوانات وبيكسار 3D"), KeyboardButton("ℹ️ عن الاستوديو والأنماط")]
+        [KeyboardButton("ℹ️ عن الاستوديو والأنماط")]
     ],
     resize_keyboard=True
 )
@@ -47,14 +48,29 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     welcome_text = (
         "🎬✨ **أهلاً بك في استوديو الفيديو والأنيميشن الشامل بالذكاء الاصطناعي!**\n\n"
         "اختر النمط الذي تريده من الأزرار بالأسفل للبدء فوراً:\n\n"
-        "1️⃣ **📺 حلقة يوتيوب كاملة (3-5 دقائق):** قصة كارتونية متكاملة من عدة مشاهد مع المونتاج والمؤثرات.\n"
+        "⚡ **كارت شاشة RunPod RTX 4090:** توليد مباشر وسريع باستخدام كارت الشاشة الخاص بك (صور + فيديو مجاناً وبدون استهلاك رصيد خارجي).\n"
+        "1️⃣ **📺 حلقة يوتيوب كاملة:** قصة كارتونية متكاملة من عدة مشاهد مع المونتاج والمؤثرات.\n"
         "2️⃣ **🐛 مقلب سريع (ريلز وشورتس):** فيديو كارتون 3D خاطف جاهز للمشاركة السريعة.\n"
         "3️⃣ **🎬 فيديو سينمائي واقعي:** لقطات أفلام 4K، سيارات، مدن، وفضاء.\n"
         "4️⃣ **⚔️ أنميشن وأنيمي ياباني:** معارك نينجا وأساطير يابانية مذهلة.\n"
         "5️⃣ **🐱 كارتون حيوانات وبيكسار:** شخصيات كارتونية لطيفة ومتحركة.\n\n"
-        "👇 اضغط على الزر الذي تريده أدناه للبدء:"
+        "👇 اضغط على الزر الذي تريده أدناه للبدء أو اكتب الأمر `/gpu <فكرتك>`:"
     )
     await update.message.reply_text(welcome_text, reply_markup=MAIN_KEYBOARD, parse_mode="Markdown")
+
+async def gpu_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if context.args:
+        update.message.text = " ".join(context.args)
+        context.user_data["selected_mode"] = "runpod_gpu"
+        await handle_message(update, context)
+    else:
+        context.user_data["selected_mode"] = "runpod_gpu"
+        await update.message.reply_text(
+            "⚡ **تم تفعيل نمط كارت الشاشة RunPod RTX 4090!**\n\n"
+            "اكتب الآن فكرة المشهد (مثلاً: *تنين صغير وبومة في غابة ساحرة*) وسيقوم كارت الشاشة برسم الشخصيات أولاً ثم تحريكهم فيديو فوراً! 🚀",
+            reply_markup=MAIN_KEYBOARD,
+            parse_mode="Markdown"
+        )
 
 async def info_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     info_text = (
@@ -73,6 +89,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     
     if user_text in ["ℹ️ عن الاستوديو والأنماط", "ℹ️ كيف يعمل النظام؟", "ℹ️ عن الشخصيات", "ℹ️ عن الشخصيات والنظام"]:
         await info_command(update, context)
+        return
+
+    if user_text in ["⚡ كارت شاشة RunPod RTX 4090", "كارت شاشة", "كارت الشاشة", "runpod", "4090", "gpu"]:
+        context.user_data["selected_mode"] = "runpod_gpu"
+        await update.message.reply_text(
+            "⚡ **تم تفعيل نمط كارت الشاشة RunPod RTX 4090!**\n\n"
+            "اكتب الآن فكرة المشهد (مثلاً: *تنين صغير وبومة في غابة ساحرة*) وسيقوم كارت الـ 4090 بتوليد صورة الشخصيات وتحريكها فيديو فوراً وبدون أي تكلفة إضافية! 🚀",
+            reply_markup=MAIN_KEYBOARD,
+            parse_mode="Markdown"
+        )
         return
 
     if user_text in ["📺 حلقة يوتيوب كاملة (قصة طويلة)", "📺 حلقة كاملة (قصة متعددة المشاهد)", "حلقة كاملة"]:
@@ -135,13 +161,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     # تحديد نمط الفيديو بذكاء
     saved_mode = context.user_data.get("selected_mode")
+    is_gpu_kw = any(k in user_text.lower() for k in ["كارت", "4090", "runpod", "gpu", "شاشة", "شاشه"])
     is_long_kw = any(k in user_text for k in [
         "طويلة", "طويله", "يوتيوب", "كاملة", "كامله", "كاملى", "حلقة", "حلقه", "حلقى",
-        "مشاهد", "مسلسل", "قصة", "قصه", "مغامرة", "مغامره", "تنين", "بومة", "بومه",
+        "مشاهد", "مسلسل", "قصة", "قصه", "مغامرة", "مغامره",
         "أفاتار", "افاتار", "رحلة", "رحله", "دين", "تاريخ"
     ])
     
-    if saved_mode == "long_episode" or is_long_kw:
+    if saved_mode == "runpod_gpu" or (is_gpu_kw and len(user_text.split()) > 1):
+        mode = "runpod_gpu"
+    elif saved_mode == "long_episode" or is_long_kw:
         mode = "long_episode"
     elif saved_mode:
         mode = saved_mode
@@ -149,7 +178,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         mode = "cinematic"
     elif any(k in user_text for k in ["أنمي", "انمي", "نينجا", "سيف", "تنين", "ساموراي", "ياباني"]):
         mode = "anime"
-    elif any(k in user_text for k in ["بيكسار", "ديزني", "قطة", "بزونة", "كلب", "أرنب", "حيوانات"]):
+    elif any(k in user_text for k in ["بيكسار", "ديزني", "قطة", "بزونة", "كلب", "أرنب", "حيوانات", "بومة"]):
         mode = "custom_cartoon"
     else:
         mode = "larva"
@@ -161,6 +190,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     idea = None if is_random else user_text
     
     mode_names = {
+        "runpod_gpu": "⚡ كارت شاشة RunPod RTX 4090 (صور + فيديو)",
         "long_episode": "📺 حلقة كارتون كاملة متكاملة المشاهد والأبطال",
         "larva": "🐛 مقلب كارتون لارفا 3D",
         "cinematic": "🎬 فيديو سينمائي واقعي 4K",
@@ -192,7 +222,30 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             pass
 
     try:
-        if mode == "long_episode":
+        if mode == "runpod_gpu":
+            from tools.runpod_comfy_tool import generate_character_on_runpod, generate_video_on_runpod, add_cartoon_audio
+            import time
+            safe_progress("⚡ 1/3: جاري الاتصال بكارت الشاشة RTX 4090 ورسم شخصيات المشهد بدقة بيكسار...")
+            run_id = int(time.time())
+            char_ref_path = f"output/runpod_char_{run_id}.png"
+            char_prompt = idea if idea else "3D Pixar cartoon cute baby dragon and curious round owl"
+            await loop.run_in_executor(
+                None,
+                lambda: generate_character_on_runpod(char_prompt, char_ref_path)
+            )
+            safe_progress("🎨 2/3: تم إنشاء وتثبيت هوية الشخصيات! جاري تحريك المشهد فيديو بواسطة SVD على الـ RTX 4090...")
+            raw_video_path = f"output/runpod_raw_{run_id}.mp4"
+            await loop.run_in_executor(
+                None,
+                lambda: generate_video_on_runpod(char_ref_path, raw_video_path)
+            )
+            safe_progress("🔊 3/3: جاري إضافة المؤثرات الصوتية والموسيقى التصويرية الكارتونية...")
+            final_video_path = f"output/runpod_video_{run_id}.mp4"
+            video_path = await loop.run_in_executor(
+                None,
+                lambda: add_cartoon_audio(raw_video_path, final_video_path)
+            )
+        elif mode == "long_episode":
             from tools.universal_studio_generator import produce_universal_episode
             video_path, plan_data, char_ref_path = await loop.run_in_executor(
                 None,
@@ -236,6 +289,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 f"🎞️ عدد المشاهد: {scenes_count} مشاهد كارتونية متسلسلة ومدمجة\n\n"
                 "🍿 حركة 3D سينمائية حقيقية من نفس صورة الأبطال.\n"
                 "🔊 هندسة أصوات الحركات والضربات + الموسيقى التصويرية الكارتونية."
+            )
+        elif mode == "runpod_gpu":
+            chosen_caption = (
+                "⚡ **فيديو كارتوني متحرك مُنتج مباشرة على كارت الشاشة RunPod RTX 4090 الخاص بك!**\n\n"
+                "🎮 **البطاقة:** NVIDIA GeForce RTX 4090 (24GB VRAM)\n"
+                "🎨 **النموذج:** DreamShaper 3D + Stable Video Diffusion\n"
+                "✨ تم التوليد والتحريك بنسبة 100% على بطاقتك المستأجرة بدون أي وسيط خارجي!"
             )
         else:
             captions = {
@@ -293,6 +353,7 @@ def main() -> None:
     app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(CommandHandler("help", info_command))
+    app.add_handler(CommandHandler("gpu", gpu_command))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     print("🚀 Larva 3D Slapstick Studio Telegram Bot is running...")
