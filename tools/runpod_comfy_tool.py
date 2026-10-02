@@ -280,20 +280,24 @@ def generate_video_on_runpod(image_path: str, output_mp4_path: str, prompt_text:
     webp_bytes = None
     for _ in range(120):
         time.sleep(2)
-        hr = requests.get(f"{target_url}/history/{prompt_id}", timeout=10)
-        hdata = hr.json()
-        if prompt_id in hdata:
-            outputs = hdata[prompt_id].get("outputs", {})
-            for nid, out in outputs.items():
-                if "images" in out:
-                    for img in out["images"]:
-                        fn = img["filename"]
-                        sub = img.get("subfolder", "")
-                        typ = img.get("type", "output")
+        try:
+            hr = requests.get(f"{target_url}/history/{prompt_id}", timeout=10)
+            hdata = hr.json()
+            if prompt_id in hdata:
+                outputs = hdata[prompt_id].get("outputs", {})
+                for nid, out in outputs.items():
+                    if "images" in out and out["images"]:
+                        fn = out["images"][0]["filename"]
+                        sub = out["images"][0].get("subfolder", "")
+                        typ = out["images"][0].get("type", "output")
                         res = requests.get(f"{target_url}/view?filename={fn}&subfolder={sub}&type={typ}", timeout=30)
-                        webp_bytes = res.content
-                        break
-            break
+                        if res.status_code == 200:
+                            webp_bytes = res.content
+                            break
+                if webp_bytes:
+                    break
+        except Exception as e:
+            logger.warning(f"Error checking history: {e}")
             
     if not webp_bytes:
         raise TimeoutError("RunPod Wan 2.1 video generation timed out")
@@ -307,9 +311,9 @@ def generate_video_on_runpod(image_path: str, output_mp4_path: str, prompt_text:
     im = Image.open(temp_webp)
     raw_frames = [frame.copy().convert("RGB") for frame in ImageSequence.Iterator(im)]
     
-    # Upscale every frame to crisp Full HD 1080p
-    hd_frames = [f.resize((1920, 1080), Image.Resampling.LANCZOS) for f in raw_frames]
-    imageio.mimsave(output_mp4_path, hd_frames, fps=12)
+    # Upscale every frame to crisp Full HD (1920x1088 divisible by 16)
+    hd_frames = [f.resize((1920, 1088), Image.Resampling.LANCZOS) for f in raw_frames]
+    imageio.mimsave(output_mp4_path, hd_frames, fps=16)
     
     if os.path.exists(temp_webp):
         try:
@@ -337,7 +341,7 @@ def add_cartoon_audio(video_path: str, output_path: str) -> str:
             str(output_path)
         ]
         try:
-            subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=25)
             return output_path
         except Exception:
             return video_path
