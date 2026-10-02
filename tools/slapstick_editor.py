@@ -30,9 +30,9 @@ logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 SFX_DIR = PROJECT_ROOT / "assets" / "sfx"
 
-TARGET_WIDTH = 720
-TARGET_HEIGHT = 1280
-FPS = 24
+TARGET_WIDTH = 540
+TARGET_HEIGHT = 960
+FPS = 18
 
 def _fit_image_vertical(image_path: Path, target_w: int = TARGET_WIDTH, target_h: int = TARGET_HEIGHT) -> np.ndarray:
     """تعديل وتوسيط الصورة لتناسب أبعاد الموبايل والريلز (9:16) بدقة عالية."""
@@ -175,6 +175,8 @@ def build_slapstick_video(shots_data: list[dict], output_path: Path, on_progress
         fps=FPS,
         codec="libx264",
         audio_codec="aac",
+        preset="ultrafast",
+        threads=1,
         logger=None,
     )
     
