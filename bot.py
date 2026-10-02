@@ -36,9 +36,9 @@ logger = logging.getLogger(__name__)
 
 MAIN_KEYBOARD = ReplyKeyboardMarkup(
     [
-        [KeyboardButton("🐛 كارتون ومقالب لارفا 3D"), KeyboardButton("🎬 فيديو سينمائي واقعي (Cinematic)")],
-        [KeyboardButton("🐱 كارتون حيوانات وأبطال بيكسار"), KeyboardButton("⚔️ أنميشن وأنيمي ياباني (Anime)")],
-        [KeyboardButton("💡 اكتب أي فكرة حرة من عندك"), KeyboardButton("ℹ️ عن الاستوديو والأنماط")]
+        [KeyboardButton("📺 حلقة يوتيوب كاملة (قصة طويلة)"), KeyboardButton("🐛 مقلب سريع (ريلز وشورتس)")],
+        [KeyboardButton("🎬 فيديو سينمائي واقعي (Cinematic)"), KeyboardButton("⚔️ أنميشن وأنيمي ياباني (Anime)")],
+        [KeyboardButton("🐱 كارتون حيوانات وبيكسار 3D"), KeyboardButton("ℹ️ عن الاستوديو والأنماط")]
     ],
     resize_keyboard=True
 )
@@ -47,23 +47,24 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     welcome_text = (
         "🎬✨ **أهلاً بك في استوديو الفيديو والأنيميشن الشامل بالذكاء الاصطناعي!**\n\n"
         "اختر النمط الذي تريده من الأزرار بالأسفل للبدء فوراً:\n\n"
-        "1️⃣ **🐛 كارتون ومقالب لارفا 3D:** كوميديا صامتة هزلية مع زوومي وبزّوز.\n"
-        "2️⃣ **🎬 فيديو سينمائي واقعي:** لقطات أفلام 4K، سيارات، مدن، طبيعة، وفضاء.\n"
-        "3️⃣ **🐱 كارتون حيوانات وأبطال بيكسار:** شخصيات ديزني وبيكسار 3D.\n"
+        "1️⃣ **📺 حلقة يوتيوب كاملة (3-5 دقائق):** قصة كارتونية متكاملة من عدة مشاهد مع المونتاج والمؤثرات.\n"
+        "2️⃣ **🐛 مقلب سريع (ريلز وشورتس):** فيديو كارتون 3D خاطف جاهز للمشاركة السريعة.\n"
+        "3️⃣ **🎬 فيديو سينمائي واقعي:** لقطات أفلام 4K، سيارات، مدن، وفضاء.\n"
         "4️⃣ **⚔️ أنميشن وأنيمي ياباني:** معارك نينجا وأساطير يابانية مذهلة.\n"
-        "5️⃣ **💡 فكرة حرة:** اكتب أي شيء يخطر ببالك ليتحول إلى فيديو فوراً!\n\n"
-        "👇 اضغط على الزر الذي يعجبك أدناه للبدء:"
+        "5️⃣ **🐱 كارتون حيوانات وبيكسار:** شخصيات كارتونية لطيفة ومتحركة.\n\n"
+        "👇 اضغط على الزر الذي تريده أدناه للبدء:"
     )
     await update.message.reply_text(welcome_text, reply_markup=MAIN_KEYBOARD, parse_mode="Markdown")
 
 async def info_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     info_text = (
         "ℹ️ **أنماط استوديو الفيديو بالذكاء الاصطناعي:**\n\n"
-        "🔹 **كارتون لارفا 3D:** مقالب الصرصور زوومي والذبابة بزّوز بدون كلام مع المؤثرات الصوتية والموسيقى.\n"
-        "🔹 **سينمائي 4K:** مشاهد واقعية فائقة الدقة بأسلوب هوليوود وإعلانات السيارات والماركات.\n"
-        "🔹 **بيكسار وديزني:** كارتون عائلي لطيف للحيوانات والأبطال الخياليين.\n"
-        "🔹 **الأنمي الياباني:** رسوم يابانية ملحمية بأسلوب ستوديو غيبلي وماكوتو شينكاي.\n\n"
-        "⚡ كل الفيديوهات يتم توليدها بجودة عالية جاهزة للمشاركة والنشر فوراً!"
+        "📺 **حلقة يوتيوب كاملة:** قصة مقلب طويلة مكونة من عدة مشاهد متسلسلة مع الموسيقى والمؤثرات.\n"
+        "🐛 **مقلب سريع (ريلز):** لقطات 3D سريعة وخاطفة لمواقع التواصل.\n"
+        "🎬 **سينمائي 4K:** مشاهد واقعية فائقة الدقة بأسلوب هوليوود.\n"
+        "⚔️ **أنمي ياباني:** رسوم أنمي يابانية ملحمية.\n"
+        "🐱 **بيكسار 3D:** كارتون عائلي لطيف للحيوانات والأبطال.\n\n"
+        "⚡ كل الفيديوهات جاهزة للنشر فوراً بدون أي علامة مائية!"
     )
     await update.message.reply_text(info_text, reply_markup=MAIN_KEYBOARD, parse_mode="Markdown")
 
@@ -73,11 +74,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if user_text in ["ℹ️ عن الاستوديو والأنماط", "ℹ️ كيف يعمل النظام؟", "ℹ️ عن الشخصيات", "ℹ️ عن الشخصيات والنظام"]:
         await info_command(update, context)
         return
-        
-    if user_text in ["🐛 كارتون ومقالب لارفا 3D", "🪰🐛 حلقة جديدة: مقلب زوومي وبزّوز", "🪰🐛 حلقة زوومي وبزّوز (سريعة وخاطفة)"]:
+
+    if user_text == "📺 حلقة يوتيوب كاملة (قصة طويلة)":
         await update.message.reply_text(
-            "🐛 **نمط كارتون ومقالب لارفا 3D:**\n\n"
-            "اكتب فكرة المقلب الآن (مثلاً: *زوومي وبزّوز يتعاركون على قطعة جبن* أو *زوومي يتزحلق بقشرة موزة*)... أو اكتب كلمة *مقلب عشوائي* لتوليد فكرة فورية!",
+            "📺 **نمط حلقة يوتيوب كاملة (قصة كارتون متكاملة):**\n\n"
+            "اكتب فكرة الحلقة الآن (مثلاً: *شجار زوومي وبزّوز على شريحة بيتزا ساخنة في المجاري* أو *معركة قوطية البيبسي الطائرة*)... أو اكتب *حلقة عشوائية*!",
+            reply_markup=MAIN_KEYBOARD,
+            parse_mode="Markdown"
+        )
+        return
+        
+    if user_text in ["🐛 كارتون ومقالب لارفا 3D", "🐛 مقلب سريع (ريلز وشورتس)", "🪰🐛 حلقة جديدة: مقلب زوومي وبزّوز"]:
+        await update.message.reply_text(
+            "🐛 **نمط مقلب كارتون 3D سريع:**\n\n"
+            "اكتب فكرة المقلب الآن (مثلاً: *زوومي يتزحلق بقشرة موزة*)... أو اكتب كلمة *مقلب عشوائي*!",
             reply_markup=MAIN_KEYBOARD,
             parse_mode="Markdown"
         )
@@ -86,16 +96,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if user_text == "🎬 فيديو سينمائي واقعي (Cinematic)":
         await update.message.reply_text(
             "🎬 **نمط الفيديو السينمائي الواقعي 4K:**\n\n"
-            "اكتب المشهد السينمائي الذي تريده (مثلاً: *سيارة رياضية سوداء مسرعة في شوارع طوكيو ليلاً تحت المطر وضوء النيون* أو *صقر يطير فوق جبال مغطاة بالثلوج*)...",
+            "اكتب المشهد السينمائي الذي تريده (مثلاً: *سيارة رياضية مسرعة في طوكيو تحت المطر*)...",
             reply_markup=MAIN_KEYBOARD,
             parse_mode="Markdown"
         )
         return
 
-    if user_text == "🐱 كارتون حيوانات وأبطال بيكسار":
+    if user_text in ["🐱 كارتون حيوانات وأبطال بيكسار", "🐱 كارتون حيوانات وبيكسار 3D"]:
         await update.message.reply_text(
             "🐱 **نمط كارتون بيكسار وديزني 3D:**\n\n"
-            "اكتب فكرة الكارتون (مثلاً: *قطة صغيرة ناعمة وكلب صغير يلعبون بالكرة في المطبخ ويتزحلقون*)...",
+            "اكتب فكرة الكارتون (مثلاً: *قطة صغيرة وكلب يلعبون بالكرة ويتزحلقون*)...",
             reply_markup=MAIN_KEYBOARD,
             parse_mode="Markdown"
         )
@@ -104,41 +114,45 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if user_text == "⚔️ أنميشن وأنيمي ياباني (Anime)":
         await update.message.reply_text(
             "⚔️ **نمط الأنمي الياباني الأسطوري:**\n\n"
-            "اكتب فكرة مشهد الأنمي (مثلاً: *فارس نينجا يقاتل بسيف متوهج على سطح قلعة وسط عاصفة أزهار الكرز*)...",
+            "اكتب فكرة مشهد الأنمي (مثلاً: *فارس نينجا يقاتل بسيف متوهج على سطح قلعة*)...",
             reply_markup=MAIN_KEYBOARD,
             parse_mode="Markdown"
         )
         return
 
-    if user_text in ["💡 اكتب أي فكرة حرة من عندك", "💡 اكتب فكرة مقلب من عندك", "💡 اكتب فكرة مقلب كارتوني"]:
+    if user_text in ["💡 اكتب أي فكرة حرة من عندك", "💡 اكتب فكرة مقلب من عندك"]:
         await update.message.reply_text(
-            "💡 اكتب أي فكرة أو مشهد يخطر ببالك الآن وسيقوم الذكاء الاصطناعي بإنتاجها فيديو فوراً...",
+            "💡 اكتب أي فكرة أو مشهد يخطر ببالك وسيقوم الذكاء الاصطناعي بإنتاجها فيديو فوراً...",
             reply_markup=MAIN_KEYBOARD,
             parse_mode="Markdown"
         )
         return
 
     # تحديد نمط الفيديو بذكاء
+    is_long_episode = any(k in user_text for k in ["طويلة", "يوتيوب", "كاملة", "قصة"])
     mode = "larva"
-    if any(k in user_text for k in ["سينمائي", "واقعي", "سيارة", "طبيعة", "فيلم", "طوكيو", "دبي", "ساعة", "عطر", "فضاء"]):
+    if is_long_episode:
+        mode = "long_episode"
+    elif any(k in user_text for k in ["سينمائي", "واقعي", "سيارة", "طبيعة", "فيلم", "طوكيو", "دبي", "فضاء"]):
         mode = "cinematic"
     elif any(k in user_text for k in ["أنمي", "انمي", "نينجا", "سيف", "تنين", "ساموراي", "ياباني"]):
         mode = "anime"
-    elif any(k in user_text for k in ["بيكسار", "ديزني", "قطة", "بزونة", "كلب", "أرنب", "ديناصور"]):
+    elif any(k in user_text for k in ["بيكسار", "ديزني", "قطة", "بزونة", "كلب", "أرنب", "حيوانات"]):
         mode = "custom_cartoon"
 
-    is_random = user_text in ["مقلب عشوائي", "حلقة جديدة", "عشوائي"]
+    is_random = user_text in ["مقلب عشوائي", "حلقة جديدة", "عشوائي", "حلقة عشوائية"]
     idea = None if is_random else user_text
     
     mode_names = {
-        "larva": "كارتون لارفا 3D",
-        "cinematic": "فيديو سينمائي واقعي 4K",
-        "anime": "أنمي ياباني أسطوري",
-        "custom_cartoon": "كارتون بيكسار وديزني 3D"
+        "long_episode": "📺 حلقة يوتيوب كاملة متعددة المشاهد",
+        "larva": "🐛 مقلب كارتون لارفا 3D",
+        "cinematic": "🎬 فيديو سينمائي واقعي 4K",
+        "anime": "⚔️ أنمي ياباني أسطوري",
+        "custom_cartoon": "🐱 كارتون بيكسار وديزني 3D"
     }
     current_mode_name = mode_names.get(mode, "فيديو ذكاء اصطناعي")
 
-    status_msg = await update.message.reply_text(f"🎬 بدأت عملية إنتاج **{current_mode_name}**... دقيقة من فضلك...")
+    status_msg = await update.message.reply_text(f"🎬 بدأت عملية إنتاج **{current_mode_name}**... ثواني من فضلك...")
 
     progress_history = []
 
@@ -153,17 +167,30 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     loop = asyncio.get_event_loop()
 
     try:
-        from tools.replicate_video_tool import produce_full_motion_slapstick
-        video_path = await loop.run_in_executor(
-            None,
-            lambda: produce_full_motion_slapstick(
-                idea=idea,
-                mode=mode,
-                on_progress=lambda msg: asyncio.run_coroutine_threadsafe(
-                    update_status(msg), loop
-                ).result()
+        if mode == "long_episode":
+            from tools.long_episode_generator import produce_long_cartoon_episode
+            video_path = await loop.run_in_executor(
+                None,
+                lambda: produce_long_cartoon_episode(
+                    idea=idea,
+                    scene_count=5,
+                    on_progress=lambda msg: asyncio.run_coroutine_threadsafe(
+                        update_status(msg), loop
+                    ).result()
+                )
             )
-        )
+        else:
+            from tools.replicate_video_tool import produce_full_motion_slapstick
+            video_path = await loop.run_in_executor(
+                None,
+                lambda: produce_full_motion_slapstick(
+                    idea=idea,
+                    mode=mode,
+                    on_progress=lambda msg: asyncio.run_coroutine_threadsafe(
+                        update_status(msg), loop
+                    ).result()
+                )
+            )
 
         await status_msg.edit_text("✅ اكتمل المونتاج بنجاح! جاري رفع الفيديو الآن إلى تليجرام... 🚀")
 
