@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 
 MAIN_KEYBOARD = ReplyKeyboardMarkup(
     [
-        [KeyboardButton("🎥 توليد حلقة فيديو 3D متحركة")],
+        [KeyboardButton("🎥 توليد حلقة كارتون جديدة (مجاناً)")],
         [KeyboardButton("💡 اكتب أي فكرة من عندك"), KeyboardButton("ℹ️ عن الشخصيات")]
     ],
     resize_keyboard=True
@@ -85,11 +85,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         "🪰🐛 حلقة جديدة: مقلب زوومي وبزّوز",
         "🪰🐛 حلقة زوومي وبزّوز (سريعة وخاطفة)",
         "🎥 فيديو حركة 3D حقيقية (MiniMax Video)",
-        "🎥 توليد حلقة فيديو 3D متحركة"
+        "🎥 توليد حلقة فيديو 3D متحركة",
+        "🎥 توليد حلقة كارتون جديدة (مجاناً)"
     ])
     idea = None if is_random else user_text
     
-    status_msg = await update.message.reply_text("🎬 بدأت عملية توليد **فيديو أنيميشن 3D متحرك بالذكاء الاصطناعي**... دقيقة من فضلك...")
+    status_msg = await update.message.reply_text("🎬 بدأت عملية إنتاج حلقة كارتون «زوومي وبزّوز» (مجاناً 100%)... ثواني من فضلك...")
 
     progress_history = []
 
@@ -104,10 +105,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     loop = asyncio.get_event_loop()
 
     try:
-        from tools.replicate_video_tool import produce_full_motion_slapstick
         video_path = await loop.run_in_executor(
             None,
-            lambda: produce_full_motion_slapstick(
+            lambda: slapstick_pipeline.run_slapstick_pipeline(
                 idea=idea,
                 on_progress=lambda msg: asyncio.run_coroutine_threadsafe(
                     update_status(msg), loop
