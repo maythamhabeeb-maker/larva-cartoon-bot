@@ -85,8 +85,24 @@ async def info_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await update.message.reply_text(info_text, reply_markup=MAIN_KEYBOARD, parse_mode="Markdown")
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not update.message or not update.message.text:
+        return
     user_text = update.message.text.strip()
+    Path("output").mkdir(parents=True, exist_ok=True)
     
+    # Check if /gpu is typed anywhere in the message (start, middle, or end)
+    if "/gpu" in user_text.lower():
+        user_text = user_text.replace("/gpu", "").replace("/GPU", "").strip()
+        context.user_data["selected_mode"] = "runpod_gpu"
+        if not user_text:
+            await update.message.reply_text(
+                "⚡ **تم تفعيل نمط كارت الشاشة RunPod RTX 4090!**\n\n"
+                "اكتب الآن فكرة المشهد (مثلاً: *تنين صغير وبومة في غابة ساحرة*) وسيقوم كارت الـ 4090 بتوليد صورة الشخصيات وتحريكها فيديو فوراً وبدون أي تكلفة إضافية! 🚀",
+                reply_markup=MAIN_KEYBOARD,
+                parse_mode="Markdown"
+            )
+            return
+
     if user_text in ["ℹ️ عن الاستوديو والأنماط", "ℹ️ كيف يعمل النظام؟", "ℹ️ عن الشخصيات", "ℹ️ عن الشخصيات والنظام"]:
         await info_command(update, context)
         return
@@ -354,7 +370,7 @@ def main() -> None:
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(CommandHandler("help", info_command))
     app.add_handler(CommandHandler("gpu", gpu_command))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    app.add_handler(MessageHandler(filters.TEXT, handle_message))
 
     print("🚀 Larva 3D Slapstick Studio Telegram Bot is running...")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
