@@ -70,14 +70,15 @@ async def info_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_text = update.message.text.strip()
     
-    if user_text in ["ℹ️ عن الاستوديو والأنماط", "ℹ️ كيف يعمل النظام؟", "ℹ️ عن الشخصيات"]:
+    if user_text in ["ℹ️ عن الاستوديو والأنماط", "ℹ️ كيف يعمل النظام؟", "ℹ️ عن الشخصيات", "ℹ️ عن الشخصيات والنظام"]:
         await info_command(update, context)
         return
         
-    if user_text == "🐛 كارتون ومقالب لارفا 3D":
+    if user_text in ["🐛 كارتون ومقالب لارفا 3D", "🪰🐛 حلقة جديدة: مقلب زوومي وبزّوز", "🪰🐛 حلقة زوومي وبزّوز (سريعة وخاطفة)"]:
         await update.message.reply_text(
             "🐛 **نمط كارتون ومقالب لارفا 3D:**\n\n"
             "اكتب فكرة المقلب الآن (مثلاً: *زوومي وبزّوز يتعاركون على قطعة جبن* أو *زوومي يتزحلق بقشرة موزة*)... أو اكتب كلمة *مقلب عشوائي* لتوليد فكرة فورية!",
+            reply_markup=MAIN_KEYBOARD,
             parse_mode="Markdown"
         )
         return
@@ -86,6 +87,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text(
             "🎬 **نمط الفيديو السينمائي الواقعي 4K:**\n\n"
             "اكتب المشهد السينمائي الذي تريده (مثلاً: *سيارة رياضية سوداء مسرعة في شوارع طوكيو ليلاً تحت المطر وضوء النيون* أو *صقر يطير فوق جبال مغطاة بالثلوج*)...",
+            reply_markup=MAIN_KEYBOARD,
             parse_mode="Markdown"
         )
         return
@@ -94,6 +96,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text(
             "🐱 **نمط كارتون بيكسار وديزني 3D:**\n\n"
             "اكتب فكرة الكارتون (مثلاً: *قطة صغيرة ناعمة وكلب صغير يلعبون بالكرة في المطبخ ويتزحلقون*)...",
+            reply_markup=MAIN_KEYBOARD,
             parse_mode="Markdown"
         )
         return
@@ -102,13 +105,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text(
             "⚔️ **نمط الأنمي الياباني الأسطوري:**\n\n"
             "اكتب فكرة مشهد الأنمي (مثلاً: *فارس نينجا يقاتل بسيف متوهج على سطح قلعة وسط عاصفة أزهار الكرز*)...",
+            reply_markup=MAIN_KEYBOARD,
             parse_mode="Markdown"
         )
         return
 
-    if user_text in ["💡 اكتب أي فكرة حرة من عندك", "💡 اكتب فكرة مقلب من عندك"]:
+    if user_text in ["💡 اكتب أي فكرة حرة من عندك", "💡 اكتب فكرة مقلب من عندك", "💡 اكتب فكرة مقلب كارتوني"]:
         await update.message.reply_text(
             "💡 اكتب أي فكرة أو مشهد يخطر ببالك الآن وسيقوم الذكاء الاصطناعي بإنتاجها فيديو فوراً...",
+            reply_markup=MAIN_KEYBOARD,
             parse_mode="Markdown"
         )
         return
