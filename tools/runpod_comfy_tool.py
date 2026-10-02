@@ -302,18 +302,24 @@ def generate_video_on_runpod(image_path: str, output_mp4_path: str, prompt_text:
     if not webp_bytes:
         raise TimeoutError("RunPod Wan 2.1 video generation timed out")
         
-    # Convert webp to 1080p High Definition MP4
+    # Convert webp to High Definition MP4 with zero memory overhead (streaming frame-by-frame)
     temp_webp = str(Path(output_mp4_path).with_suffix(".temp.webp"))
     Path(temp_webp).parent.mkdir(parents=True, exist_ok=True)
     with open(temp_webp, "wb") as f:
         f.write(webp_bytes)
         
-    im = Image.open(temp_webp)
-    raw_frames = [frame.copy().convert("RGB") for frame in ImageSequence.Iterator(im)]
+    import gc
+    import numpy as np
     
-    # Upscale every frame to crisp Full HD (1920x1088 divisible by 16)
-    hd_frames = [f.resize((1920, 1088), Image.Resampling.LANCZOS) for f in raw_frames]
-    imageio.mimsave(output_mp4_path, hd_frames, fps=16)
+    im = Image.open(temp_webp)
+    writer = imageio.get_writer(output_mp4_path, fps=16, codec="libx264", quality=8)
+    for frame in ImageSequence.Iterator(im):
+        f = frame.convert("RGB").resize((1280, 720), Image.Resampling.BILINEAR)
+        writer.append_data(np.array(f))
+        del f
+    writer.close()
+    im.close()
+    gc.collect()
     
     if os.path.exists(temp_webp):
         try:
