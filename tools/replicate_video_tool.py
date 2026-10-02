@@ -117,34 +117,58 @@ def generate_video_minimax(prompt: str, first_frame_image: Path = None, output_p
 
         time.sleep(5)
 
+def enrich_video_prompt(idea: str = None, mode: str = "larva", on_progress=None) -> str:
+    """تحويل فكرة المستخدم (بالعربي أو الإنجليزي) إلى وصف بصري إخراجي هوليوودي فائق الدقة بالإنجليزية."""
+    clean_idea = (idea or "").strip()
+    if on_progress:
+        on_progress("🧠 المخرج الذكي يصيغ المشهد السينمائي وأبعاد الحركة والإضاءة ثلاثية الأبعاد...")
+
+    try:
+        from tools.gemini_tool import generate_text
+        prompt_instruction = f"""
+You are a World-Class Hollywood Animation Director and Master Visual Prompt Engineer for AI Video Generators (MiniMax / Hailuo Video-01).
+Transform the user's idea into ONE single, highly-detailed, cinematic English prompt for a 3D motion video.
+
+User Idea: {clean_idea if clean_idea else 'A hilarious slapstick gag between Zoomy and Bazzouz'}
+Target Mode: {mode}
+
+Guidelines per mode:
+1. 'larva':
+   - Focus on Zoomy (an adorable goofy glossy amber-golden cartoon cockroach with giant round bulging googly eyes and springy antennae) and/or Bazzouz (a chubby metallic electric-blue fly with comic red goggles).
+   - Setting: realistic sunlit urban sewer drain concrete floor with soda cans and colorful bottle caps.
+   - Action: funny high-speed physical slapstick comedy, elastic squash-and-stretch body deformation, cartoon reactions, vivid colors, fluid 3D character animation in Pixar and Larva style.
+2. 'cinematic':
+   - 8K ultra-photorealistic cinematic movie shot, anamorphic 35mm lens, dramatic volumetric lighting, IMAX scale realism, ray-traced reflections, smooth cinematic gimbal movement.
+3. 'anime':
+   - Masterpiece anime animation scene, Studio Ufotable & Makoto Shinkai aesthetic, vibrant anime colors, dynamic sakuga motion, dramatic anime lighting.
+4. 'custom_cartoon':
+   - 3D Pixar & Disney animation style, lovable cute expressive characters, soft subsurface scattering fur/skin, bright cheerful colors, vibrant lighting, smooth 3D motion.
+
+Output ONLY the final English visual prompt in 2 to 3 detailed descriptive sentences. Do NOT include markdown, quotes, or preambles.
+"""
+        enriched = generate_text(prompt_instruction).strip().strip('"').strip("'")
+        if enriched and len(enriched) > 20:
+            return enriched
+    except Exception as e:
+        logger.warning(f"Error enriching prompt with LLM: {e}")
+
+    # Fallback if LLM unavailable
+    if mode == "cinematic":
+        return f"Masterpiece 4K ultra-realistic cinematic movie footage: {clean_idea if clean_idea else 'A luxury sports car speeding on a neon-lit wet Tokyo highway at night under rain'}. Hyper-realistic, dramatic volumetric lighting, shot on 35mm anamorphic lens, IMAX quality, photorealistic reflections, smooth camera tracking."
+    elif mode == "anime":
+        return f"Masterpiece Japanese anime animation scene, Studio Ghibli and Makoto Shinkai aesthetic: {clean_idea if clean_idea else 'A brave young ninja warrior with glowing katana standing on a pagoda rooftop during cherry blossom storm'}. High quality anime art, vibrant colors, fluid expressive motion, atmospheric cinematic lighting."
+    elif mode == "custom_cartoon":
+        return f"Masterpiece 3D Pixar Disney style animated cartoon scene: {clean_idea if clean_idea else 'A cute fluffy baby kitten and puppy playing together and sliding on a kitchen floor'}. Adorable expressive characters, fluid 3D character movement, vibrant cheerful colors, rich studio lighting."
+    else:
+        return f"Masterpiece 3D CGI cartoon slapstick animation scene: {clean_idea if clean_idea else 'A cute goofy golden cartoon cockroach named Zoomy slipping and fast-running in a sewer drain, elastic legs, slapstick funny movements, shiny textures'}. Pixar & Larva 3D animation style, extremely fluid character movement, funny physical comedy, high framerate, rich volumetric lighting."
+
+
 def produce_full_motion_slapstick(idea: str = None, mode: str = "larva", on_progress=None) -> Path:
     """توليد فيديو حركة 3D بالذكاء الاصطناعي مع دعم الأنماط المختلفة (لارفا، سينمائي واقعي، أنمي، بيكسار)."""
-    from moviepy import VideoFileClip, AudioFileClip, CompositeAudioClip
-    from moviepy.audio.fx import MultiplyVolume
-    
     clean_idea = (idea or "").strip()
-    
-    if mode == "cinematic":
-        prompt = (
-            f"Masterpiece 4K ultra-realistic cinematic movie footage: {clean_idea if clean_idea else 'A luxury sports car speeding on a neon-lit wet Tokyo highway at night under rain'}. "
-            "Hyper-realistic, dramatic volumetric lighting, shot on 35mm anamorphic lens, IMAX quality, photorealistic reflections, smooth camera tracking."
-        )
-    elif mode == "anime":
-        prompt = (
-            f"Masterpiece Japanese anime animation scene, Studio Ghibli and Makoto Shinkai aesthetic: {clean_idea if clean_idea else 'A brave young ninja warrior with glowing katana standing on a pagoda rooftop during cherry blossom storm'}. "
-            "High quality anime art, vibrant colors, fluid expressive motion, atmospheric cinematic lighting."
-        )
-    elif mode == "custom_cartoon":
-        prompt = (
-            f"Masterpiece 3D Pixar Disney style animated cartoon scene: {clean_idea if clean_idea else 'A cute fluffy baby kitten and puppy playing together and sliding on a kitchen floor'}. "
-            "Adorable expressive characters, fluid 3D character movement, vibrant cheerful colors, rich studio lighting."
-        )
-    else:  # larva mode
-        prompt = (
-            f"Masterpiece 3D CGI cartoon slapstick animation scene: {clean_idea if clean_idea else 'A cute goofy golden cartoon cockroach named Zoomy slipping and fast-running in a sewer drain, elastic legs, slapstick funny movements, shiny textures'}. "
-            "Pixar & Larva 3D animation style, extremely fluid character movement, funny physical comedy, high framerate, rich volumetric lighting."
-        )
-    
+    prompt = enrich_video_prompt(idea=clean_idea, mode=mode, on_progress=on_progress)
+    logger.info(f"Generated enriched prompt for mode [{mode}]: {prompt}")
+
     raw_video = generate_video_minimax(prompt=prompt, on_progress=on_progress)
     
     if on_progress:
