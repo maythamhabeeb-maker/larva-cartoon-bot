@@ -71,12 +71,12 @@ while True:
                 generate_character_on_runpod(clean_idea, char_path)
                 
                 # Send photo
-                send_photo(chat_id, char_path, "🎨 **تم تصميم وتثبيت أبطال المشهد على كارت الـ RTX 4090!**\nجاري الآن تحريكهم فيديو بواسطة نموذج SVD...")
+                send_photo(chat_id, char_path, "🎨 **تم تصميم بطل المشهد بدقة Ultra-HD 4K بيكسار 3D!**\n🎬 جاري الآن إنتاج حركة سينمائية فائقة الوضوح عبر موديل **Wan 2.1** الحديث...")
                 
-                # 2. Generate video on 4090
+                # 2. Generate video on 4090 using Wan 2.1
                 raw_video = f"output/runpod_raw_{run_id}.mp4"
-                print("Generating SVD video on RTX 4090...")
-                generate_video_on_runpod(char_path, raw_video)
+                print("Generating Wan 2.1 video on RTX 4090...")
+                generate_video_on_runpod(char_path, raw_video, prompt_text=clean_idea)
                 
                 # 3. Add cartoon BGM
                 final_video = f"output/runpod_video_{run_id}.mp4"
@@ -84,10 +84,10 @@ while True:
                 
                 # Send video
                 caption = (
-                    "⚡ **فيديو كارتوني متحرك مُنتج بالكامل على كارت الشاشة RunPod RTX 4090 الخاص بك!**\n\n"
+                    "🔥 **فيديو سينمائي فائق الوضوح مُنتج عبر موديل Wan 2.1 الحديث!**\n\n"
                     "🎮 **البطاقة:** NVIDIA GeForce RTX 4090 (24GB VRAM)\n"
-                    "🎨 **النموذج:** DreamShaper 3D + Stable Video Diffusion\n"
-                    "✨ تم التوليد والتحريك بنسبة 100% على بطاقتك المستأجرة بدون أي وسيط خارجي!"
+                    "🧠 **الموديل:** Wan 2.1 + 4x-UltraSharp 4K\n"
+                    "✨ جودة سينمائية خالية تماماً من التشويش أو التمويه، تم التوليد بنسبة 100% على بطاقتك المستأجرة بدون أي خصم خارجي!"
                 )
                 print(f"Sending video to chat {chat_id}...")
                 send_video(chat_id, final_video, caption)

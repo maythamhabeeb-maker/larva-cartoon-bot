@@ -159,88 +159,125 @@ def upload_image_to_runpod(local_image_path: str, url: str = None) -> str:
             return r.json().get("name", os.path.basename(local_image_path))
         raise RuntimeError(f"Failed to upload image to ComfyUI: {r.text}")
 
-def generate_video_on_runpod(image_path: str, output_mp4_path: str, url: str = None) -> str:
-    """Animate a character reference image into video using SVD on RTX 4090."""
+def generate_video_on_runpod(image_path: str, output_mp4_path: str, prompt_text: str = None, url: str = None) -> str:
+    """Generate high-definition cinematic cartoon video using Wan 2.1 on RTX 4090."""
+    from config import RUNPOD_COMFY_URL
     target_url = url or RUNPOD_COMFY_URL
     
-    # 1. Upload init image
-    server_image_name = upload_image_to_runpod(image_path, target_url)
+    # 1. Translate & enhance prompt if provided
+    final_prompt = "3D Pixar Disney animation of cute cartoon character, vivid colors, expressive lively motion, 8k masterpiece"
+    if prompt_text:
+        final_prompt = translate_and_enhance_prompt(prompt_text)
     
-    # 2. Build SVD workflow
+    # 2. Build Wan 2.1 workflow
     workflow = {
         "1": {
             "inputs": {
-                "image": server_image_name,
-                "upload": "image"
+                "unet_name": "wan2.1_t2v_1.3B_bf16.safetensors",
+                "weight_dtype": "default"
             },
-            "class_type": "LoadImage"
+            "class_type": "UNETLoader"
         },
         "2": {
             "inputs": {
-                "ckpt_name": "svd_xt.safetensors"
+                "clip_name": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+                "type": "wan"
             },
-            "class_type": "ImageOnlyCheckpointLoader"
+            "class_type": "CLIPLoader"
         },
         "3": {
             "inputs": {
-                "width": 1024,
-                "height": 576,
-                "video_frames": 25,
-                "motion_bucket_id": 127,
-                "fps": 12,
-                "augmentation_level": 0.04,
-                "clip_vision": ["2", 1],
-                "init_image": ["1", 0],
-                "vae": ["2", 2]
+                "vae_name": "wan_2.1_vae.safetensors"
             },
-            "class_type": "SVD_img2vid_Conditioning"
+            "class_type": "VAELoader"
         },
         "4": {
             "inputs": {
-                "seed": int(time.time() * 1000) % 10000000,
-                "steps": 25,
-                "cfg": 2.5,
-                "sampler_name": "euler",
-                "scheduler": "karras",
-                "denoise": 1.0,
-                "model": ["2", 0],
-                "positive": ["3", 0],
-                "negative": ["3", 1],
-                "latent_image": ["3", 2]
+                "text": f"3D Pixar Disney animation, {final_prompt}, highly expressive movement, octane render, Disney Pixar studio quality",
+                "clip": ["2", 0]
             },
-            "class_type": "KSampler"
+            "class_type": "CLIPTextEncode"
         },
         "5": {
             "inputs": {
-                "samples": ["4", 0],
-                "vae": ["2", 2]
+                "text": "color artifacts, low quality, blurry, deformed, bad anatomy, text, watermark, static, frozen",
+                "clip": ["2", 0]
             },
-            "class_type": "VAEDecode"
+            "class_type": "CLIPTextEncode"
         },
         "6": {
             "inputs": {
-                "filename_prefix": "RunPod_SVD_HD",
-                "fps": 12.0,
-                "lossless": True,
-                "quality": 100,
+                "positive": ["4", 0],
+                "negative": ["5", 0],
+                "vae": ["3", 0],
+                "width": 832,
+                "height": 480,
+                "length": 33, # 33 frames at 16fps (~2s smooth loop)
+                "batch_size": 1
+            },
+            "class_type": "WanImageToVideo"
+        },
+        "7": {
+            "inputs": {
+                "seed": int(time.time() * 1000) % 10000000,
+                "steps": 25,
+                "cfg": 6.0,
+                "sampler_name": "uni_pc",
+                "scheduler": "simple",
+                "denoise": 1.0,
+                "model": ["1", 0],
+                "positive": ["6", 0],
+                "negative": ["6", 1],
+                "latent_image": ["6", 2]
+            },
+            "class_type": "KSampler"
+        },
+        "8": {
+            "inputs": {
+                "samples": ["7", 0],
+                "vae": ["3", 0]
+            },
+            "class_type": "VAEDecode"
+        },
+        "9": {
+            "inputs": {
+                "filename_prefix": "Wan21_HD",
+                "fps": 16.0,
+                "lossless": False,
+                "quality": 95,
                 "method": "default",
-                "images": ["5", 0]
+                "images": ["8", 0]
             },
             "class_type": "SaveAnimatedWEBP"
         }
     }
     
-    r = requests.post(f"{target_url}/prompt", json={"prompt": workflow}, timeout=10)
+    # If a character image is provided, link it to guide Wan
+    if image_path and os.path.exists(image_path):
+        try:
+            server_img_name = upload_image_to_runpod(image_path, target_url)
+            workflow["10"] = {
+                "inputs": {
+                    "image": server_img_name,
+                    "upload": "image"
+                },
+                "class_type": "LoadImage"
+            }
+            workflow["6"]["inputs"]["start_image"] = ["10", 0]
+        except Exception as e:
+            logger.warning(f"Could not attach start_image to Wan: {e}")
+    
+    r = requests.post(f"{target_url}/prompt", json={"prompt": workflow}, timeout=15)
     if r.status_code != 200:
-        raise RuntimeError(f"RunPod SVD error: {r.text}")
+        raise RuntimeError(f"RunPod Wan 2.1 error: {r.text}")
         
     prompt_id = r.json().get("prompt_id")
     
-    # Poll for completion (usually 20-30s on RTX 4090)
+    # Poll for completion (Wan 2.1 takes ~30-40s on RTX 4090)
     webp_bytes = None
     for _ in range(120):
         time.sleep(2)
-        hr = requests.get(f"{target_url}/history/{prompt_id}", timeout=5)
+        hr = requests.get(f"{target_url}/history/{prompt_id}", timeout=10)
         hdata = hr.json()
         if prompt_id in hdata:
             outputs = hdata[prompt_id].get("outputs", {})
@@ -256,7 +293,7 @@ def generate_video_on_runpod(image_path: str, output_mp4_path: str, url: str = N
             break
             
     if not webp_bytes:
-        raise TimeoutError("RunPod SVD video generation timed out")
+        raise TimeoutError("RunPod Wan 2.1 video generation timed out")
         
     # Convert webp to 1080p High Definition MP4
     temp_webp = str(Path(output_mp4_path).with_suffix(".temp.webp"))
