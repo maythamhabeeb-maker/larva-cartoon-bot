@@ -90,7 +90,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     ])
     idea = None if is_random else user_text
     
-    status_msg = await update.message.reply_text("🎬 بدأت عملية إنتاج حلقة كارتون «زوومي وبزّوز» عبر كارت الشاشة (RunPod GPU)... ثواني من فضلك...")
+    status_msg = await update.message.reply_text("🎬 بدأت عملية إنتاج كارتون 3D متحرك حقيقي (بأسلوب لارفا)... دقيقة من فضلك...")
 
     progress_history = []
 
@@ -105,9 +105,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     loop = asyncio.get_event_loop()
 
     try:
+        from tools.replicate_video_tool import produce_full_motion_slapstick
         video_path = await loop.run_in_executor(
             None,
-            lambda: slapstick_pipeline.run_slapstick_pipeline(
+            lambda: produce_full_motion_slapstick(
                 idea=idea,
                 on_progress=lambda msg: asyncio.run_coroutine_threadsafe(
                     update_status(msg), loop
@@ -122,9 +123,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             await update.message.reply_video(
                 video=vf,
                 caption=(
-                    f"🎬 **حلقة كارتون زوومي وبزّوز جاهزة!**\n"
-                    f"🐛 العنوان: {video_path.stem.replace('_', ' ')}\n\n"
-                    "⚡ تم الإنتاج بالكامل عبر كارت الشاشة (RunPod GPU).\n"
+                    f"🎬 **حلقة كارتون لارفا 3D المتحركة جاهزة!**\n"
+                    f"🐛 أبطال الحلقة: زوومي وبزّوز\n\n"
+                    "🍿 حركة أنيميشن 3D سينمائية حقيقية بالكامل (مو صور).\n"
                     "🔊 كوميديا صامتة مع المؤثرات الصوتية والموسيقى الكارتونية بدون أي كلام.\n"
                     "📲 جاهز للنشر والمشاركة فوراً!"
                 ),
