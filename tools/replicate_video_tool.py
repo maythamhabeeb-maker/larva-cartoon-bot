@@ -117,31 +117,52 @@ def generate_video_minimax(prompt: str, first_frame_image: Path = None, output_p
 
         time.sleep(5)
 
-def produce_full_motion_slapstick(idea: str = None, on_progress=None) -> Path:
-    """توليد فيديو حركة 3D حقيقية مع تركيب المؤثرات الصوتية والموسيقى الكارتونية."""
+def produce_full_motion_slapstick(idea: str = None, mode: str = "larva", on_progress=None) -> Path:
+    """توليد فيديو حركة 3D بالذكاء الاصطناعي مع دعم الأنماط المختلفة (لارفا، سينمائي واقعي، أنمي، بيكسار)."""
     from moviepy import VideoFileClip, AudioFileClip, CompositeAudioClip
     from moviepy.audio.fx import MultiplyVolume
     
-    prompt = (
-        f"Masterpiece 3D CGI cartoon slapstick animation scene: {idea if idea else 'A cute goofy golden cartoon cockroach named Zoomy slipping and fast-running in a sewer drain, elastic legs, slapstick funny movements, shiny textures'}. "
-        "Pixar & Larva 3D animation style, extremely fluid character movement, funny physical comedy, high framerate, rich volumetric lighting."
-    )
+    clean_idea = (idea or "").strip()
+    
+    if mode == "cinematic":
+        prompt = (
+            f"Masterpiece 4K ultra-realistic cinematic movie footage: {clean_idea if clean_idea else 'A luxury sports car speeding on a neon-lit wet Tokyo highway at night under rain'}. "
+            "Hyper-realistic, dramatic volumetric lighting, shot on 35mm anamorphic lens, IMAX quality, photorealistic reflections, smooth camera tracking."
+        )
+    elif mode == "anime":
+        prompt = (
+            f"Masterpiece Japanese anime animation scene, Studio Ghibli and Makoto Shinkai aesthetic: {clean_idea if clean_idea else 'A brave young ninja warrior with glowing katana standing on a pagoda rooftop during cherry blossom storm'}. "
+            "High quality anime art, vibrant colors, fluid expressive motion, atmospheric cinematic lighting."
+        )
+    elif mode == "custom_cartoon":
+        prompt = (
+            f"Masterpiece 3D Pixar Disney style animated cartoon scene: {clean_idea if clean_idea else 'A cute fluffy baby kitten and puppy playing together and sliding on a kitchen floor'}. "
+            "Adorable expressive characters, fluid 3D character movement, vibrant cheerful colors, rich studio lighting."
+        )
+    else:  # larva mode
+        prompt = (
+            f"Masterpiece 3D CGI cartoon slapstick animation scene: {clean_idea if clean_idea else 'A cute goofy golden cartoon cockroach named Zoomy slipping and fast-running in a sewer drain, elastic legs, slapstick funny movements, shiny textures'}. "
+            "Pixar & Larva 3D animation style, extremely fluid character movement, funny physical comedy, high framerate, rich volumetric lighting."
+        )
     
     raw_video = generate_video_minimax(prompt=prompt, on_progress=on_progress)
     
     if on_progress:
-        on_progress("✂️ تركيب المؤثرات الصوتية والموسيقى الكارتونية على الفيديو المتحرك...")
+        on_progress("✂️ معالجة وتركيب الصوت والمونتاج النهائي على الفيديو...")
         
     clip = VideoFileClip(str(raw_video))
     dur = clip.duration
     
     sfx_dir = Path(__file__).resolve().parent.parent / "assets" / "sfx"
-    bgm = AudioFileClip(str(sfx_dir / "funny_bgm.wav")).subclipped(0, min(dur, 12.0)).with_effects([MultiplyVolume(0.4)])
-    boing = AudioFileClip(str(sfx_dir / "boing.wav")).with_start(1.0)
-    splat = AudioFileClip(str(sfx_dir / "splat.wav")).with_start(max(0.5, dur - 1.5))
     
-    mixed_audio = CompositeAudioClip([bgm, boing, splat])
-    final_video = clip.with_audio(mixed_audio)
+    if mode in ["larva", "custom_cartoon"]:
+        bgm = AudioFileClip(str(sfx_dir / "funny_bgm.wav")).subclipped(0, min(dur, 12.0)).with_effects([MultiplyVolume(0.4)])
+        boing = AudioFileClip(str(sfx_dir / "boing.wav")).with_start(1.0)
+        splat = AudioFileClip(str(sfx_dir / "splat.wav")).with_start(max(0.5, dur - 1.5))
+        mixed_audio = CompositeAudioClip([bgm, boing, splat])
+        final_video = clip.with_audio(mixed_audio)
+    else:
+        final_video = clip
     
     out_final = raw_video.parent / f"final_{raw_video.name}"
     final_video.write_videofile(
