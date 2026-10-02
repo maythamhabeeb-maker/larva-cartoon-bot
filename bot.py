@@ -184,6 +184,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     loop = asyncio.get_event_loop()
     plan_data = None
 
+    def safe_progress(msg: str):
+        try:
+            asyncio.run_coroutine_threadsafe(update_status(msg), loop)
+        except Exception:
+            pass
+
     try:
         if mode == "long_episode":
             from tools.universal_studio_generator import produce_universal_episode
@@ -191,9 +197,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 None,
                 lambda: produce_universal_episode(
                     idea=idea,
-                    on_progress=lambda msg: asyncio.run_coroutine_threadsafe(
-                        update_status(msg), loop
-                    ).result()
+                    on_progress=safe_progress
                 )
             )
         else:
@@ -203,9 +207,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 lambda: produce_full_motion_slapstick(
                     idea=idea,
                     mode=mode,
-                    on_progress=lambda msg: asyncio.run_coroutine_threadsafe(
-                        update_status(msg), loop
-                    ).result()
+                    on_progress=safe_progress
                 )
             )
 

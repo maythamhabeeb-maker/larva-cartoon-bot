@@ -56,7 +56,7 @@ def generate_video_minimax(prompt: str, first_frame_image: Path = None, output_p
         on_progress("🎬 إرسال طلب الفيديو إلى محرك MiniMax / Hailuo العالمي...")
 
     url = "https://api.replicate.com/v1/models/minimax/video-01/predictions"
-    resp = requests.post(url, headers=headers, json={"input": input_payload})
+    resp = requests.post(url, headers=headers, json={"input": input_payload}, timeout=30)
     
     if resp.status_code not in [200, 201, 202]:
         raise RuntimeError(f"Replicate API error ({resp.status_code}): {resp.text}")
@@ -69,8 +69,15 @@ def generate_video_minimax(prompt: str, first_frame_image: Path = None, output_p
 
     # Polling until done
     start_time = time.time()
+    last_report_time = start_time
     while True:
-        poll_resp = requests.get(poll_url, headers={"Authorization": f"Bearer {token}"})
+        try:
+            poll_resp = requests.get(poll_url, headers={"Authorization": f"Bearer {token}"}, timeout=25)
+        except Exception as e:
+            logger.warning(f"Poll request network retry: {e}")
+            time.sleep(3)
+            continue
+
         if poll_resp.status_code != 200:
             time.sleep(4)
             continue
@@ -78,9 +85,11 @@ def generate_video_minimax(prompt: str, first_frame_image: Path = None, output_p
         p_data = poll_resp.json()
         status = p_data.get("status")
 
-        elapsed = int(time.time() - start_time)
-        if on_progress and elapsed % 15 == 0:
+        now = time.time()
+        if on_progress and (now - last_report_time >= 15):
+            elapsed = int(now - start_time)
             on_progress(f"⏳ معالجة حركة الفيديو بالذكاء الاصطناعي... ({elapsed} ثانية)")
+            last_report_time = now
 
         if status == "succeeded":
             video_url = p_data.get("output")
