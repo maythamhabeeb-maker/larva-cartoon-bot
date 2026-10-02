@@ -90,7 +90,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     ])
     idea = None if is_random else user_text
     
-    status_msg = await update.message.reply_text("🎬 بدأت عملية إنتاج حلقة كارتون «زوومي وبزّوز» (مجاناً 100%)... ثواني من فضلك...")
+    status_msg = await update.message.reply_text("🎬 بدأت عملية إنتاج حلقة كارتون «زوومي وبزّوز» عبر كارت الشاشة (RunPod GPU)... ثواني من فضلك...")
 
     progress_history = []
 
@@ -122,9 +122,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             await update.message.reply_video(
                 video=vf,
                 caption=(
-                    f"🎬 **حلقة كارتون لارفا جاهزة!**\n"
+                    f"🎬 **حلقة كارتون زوومي وبزّوز جاهزة!**\n"
                     f"🐛 العنوان: {video_path.stem.replace('_', ' ')}\n\n"
-                    "🔊 فيديو كوميدي صامت مع المؤثرات الصوتية والموسيقى الكارتونية بدون أي كلام.\n"
+                    "⚡ تم الإنتاج بالكامل عبر كارت الشاشة (RunPod GPU).\n"
+                    "🔊 كوميديا صامتة مع المؤثرات الصوتية والموسيقى الكارتونية بدون أي كلام.\n"
                     "📲 جاهز للنشر والمشاركة فوراً!"
                 ),
                 supports_streaming=True,
