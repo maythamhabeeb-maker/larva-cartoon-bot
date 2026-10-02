@@ -135,7 +135,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     # تحديد نمط الفيديو بذكاء
     saved_mode = context.user_data.get("selected_mode")
-    is_long_kw = any(k in user_text for k in ["طويلة", "طويله", "يوتيوب", "كاملة", "كامله", "كاملى", "حلقة", "حلقه", "حلقى", "مشاهد", "مسلسل", "قصة", "قصه"])
+    is_long_kw = any(k in user_text for k in [
+        "طويلة", "طويله", "يوتيوب", "كاملة", "كامله", "كاملى", "حلقة", "حلقه", "حلقى",
+        "مشاهد", "مسلسل", "قصة", "قصه", "مغامرة", "مغامره", "تنين", "بومة", "بومه",
+        "أفاتار", "افاتار", "رحلة", "رحله", "دين", "تاريخ"
+    ])
     
     if saved_mode == "long_episode" or is_long_kw:
         mode = "long_episode"
@@ -157,7 +161,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     idea = None if is_random else user_text
     
     mode_names = {
-        "long_episode": "📺 حلقة كارتون كاملة متعددة المشاهد",
+        "long_episode": "📺 حلقة كارتون كاملة متكاملة المشاهد والأبطال",
         "larva": "🐛 مقلب كارتون لارفا 3D",
         "cinematic": "🎬 فيديو سينمائي واقعي 4K",
         "anime": "⚔️ أنمي ياباني أسطوري",
@@ -178,15 +182,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             pass
 
     loop = asyncio.get_event_loop()
+    plan_data = None
 
     try:
         if mode == "long_episode":
-            from tools.long_episode_generator import produce_long_cartoon_episode
-            video_path = await loop.run_in_executor(
+            from tools.universal_studio_generator import produce_universal_episode
+            video_path, plan_data = await loop.run_in_executor(
                 None,
-                lambda: produce_long_cartoon_episode(
+                lambda: produce_universal_episode(
                     idea=idea,
-                    scene_count=4,
                     on_progress=lambda msg: asyncio.run_coroutine_threadsafe(
                         update_status(msg), loop
                     ).result()
@@ -205,17 +209,28 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 )
             )
 
-        await status_msg.edit_text("✅ اكتمل المونتاج بنجاح! جاري رفع الفيديو الآن إلى تليجرام... 🚀")
+        await status_msg.edit_text("✅ اكتمل المونتاج بنجاح! جاري رفع الحلقة الآن إلى تليجرام... 🚀")
 
-        # إرسال الفيديو النهائي مع كابشن مخصص للنمط
-        captions = {
-            "long_episode": "🎬 **حلقة كارتون لارفا 3D الكاملة جاهزة!**\n🍿 قصة كارتونية متكاملة من عدة مشاهد مدمجة.\n🔊 كوميديا صامتة + مؤثرات هزلية + موسيقى تصويرية كاملة.",
-            "larva": "🎬 **حلقة كارتون لارفا 3D المتحركة جاهزة!**\n🐛 أبطال الحلقة: زوومي وبزّوز\n🔊 كوميديا صامتة بالأصوات والموسيقى الكارتونية.",
-            "cinematic": "🎬 **المشهد السينمائي الواقعي 4K جاهز!**\n🍿 دقة سينمائية فائقة وحركة كاميرا احترافية.",
-            "anime": "⚔️ **مشهد الأنمي الياباني الأسطوري جاهز!**\n🌸 أسلوب أنيميشن ياباني ناعم ومميز.",
-            "custom_cartoon": "🐱 **كارتون بيكسار 3D جاهز!**\n🎨 شخصيات كارتونية لطيفة ومتحركة بالكامل."
-        }
-        chosen_caption = captions.get(mode, "🎬 **الفيديو جاهز بالذكاء الاصطناعي!**")
+        # إرسال الفيديو النهائي مع كابشن مخصص ومفصل
+        if mode == "long_episode" and plan_data:
+            title = plan_data.get("title_ar", "حلقة كارتون كاملة")
+            chars = " و ".join([c.get("name_ar", "") for c in plan_data.get("characters", []) if c.get("name_ar")])
+            scenes_count = len(plan_data.get("scenes", []))
+            chosen_caption = (
+                f"🎬 **«{title}» (حلقة كاملة متكاملة)**\n\n"
+                f"👥 أبطال الحلقة: {chars if chars else 'أبطال الكارتون'}\n"
+                f"🎞️ عدد المشاهد: {scenes_count} مشاهد كارتونية متسلسلة ومدمجة\n\n"
+                "🍿 حركة 3D سينمائية حقيقية بالكامل (مو صور).\n"
+                "🔊 هندسة أصوات الحركات والضربات + الموسيقى التصويرية الكارتونية."
+            )
+        else:
+            captions = {
+                "larva": "🎬 **حلقة كارتون لارفا 3D المتحركة جاهزة!**\n🐛 أبطال الحلقة: زوومي وبزّوز\n🔊 كوميديا صامتة بالأصوات والموسيقى الكارتونية.",
+                "cinematic": "🎬 **المشهد السينمائي الواقعي 4K جاهز!**\n🍿 دقة سينمائية فائقة وحركة كاميرا احترافية.",
+                "anime": "⚔️ **مشهد الأنمي الياباني الأسطوري جاهز!**\n🌸 أسلوب أنيميشن ياباني ناعم ومميز.",
+                "custom_cartoon": "🐱 **كارتون بيكسار 3D جاهز!**\n🎨 شخصيات كارتونية لطيفة ومتحركة بالكامل."
+            }
+            chosen_caption = captions.get(mode, "🎬 **الفيديو جاهز بالذكاء الاصطناعي!**")
 
         with open(video_path, "rb") as vf:
             await update.message.reply_video(
