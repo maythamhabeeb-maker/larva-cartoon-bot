@@ -126,3 +126,45 @@ def generate_larva_image(prompt: str, output_path: Path, shot_index: int = 0) ->
 
     raise RuntimeError("Failed to generate Larva 3D image from Gemini.")
 
+
+def generate_universal_character_image(plan: dict, output_path: Path) -> Path:
+    """توليد صورة الشخصيات المرجعية ثلاثية الأبعاد لتثبيت هويتهم وملامحهم في جميع المشاهد."""
+    client = get_gemini_client()
+    
+    chars_desc = ". ".join([
+        f"{c.get('name_en', c.get('name_ar', 'Character'))}: {c.get('visual_identity', '')}"
+        for c in plan.get("characters", [])
+    ])
+    setting = plan.get("setting_en", "a colorful vibrant 3D animated world")
+    
+    prompt = (
+        f"Masterpiece 3D Pixar character concept reference art: {chars_desc}. "
+        f"Characters standing together in {setting}. "
+        "Pixar Disney 3D animation style, adorable expressive faces, full body shot, "
+        "extremely detailed textures, rich volumetric studio lighting, vibrant cheerful colors, "
+        "Octane 3D CGI rendering, 8k resolution, crystal clear focus."
+    )
+
+    logger.info("Generating 3D Universal Character Reference Image...")
+
+    for model_name in ["gemini-2.5-flash-image", "gemini-3.1-flash-image"]:
+        try:
+            response = client.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_modalities=["IMAGE", "TEXT"],
+                ),
+            )
+            for part in response.candidates[0].content.parts:
+                if hasattr(part, "inline_data") and part.inline_data:
+                    output_path.write_bytes(part.inline_data.data)
+                    logger.info(f"Character reference image saved! ({len(part.inline_data.data)//1024} KB)")
+                    return output_path
+        except Exception as e:
+            logger.warning(f"Model {model_name} failed: {e}")
+            continue
+
+    raise RuntimeError("Failed to generate character reference image.")
+
+

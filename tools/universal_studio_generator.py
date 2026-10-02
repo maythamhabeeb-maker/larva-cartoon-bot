@@ -47,14 +47,27 @@ def produce_universal_episode(idea: str = None, on_progress=None) -> Tuple[Path,
     scenes = plan.get("scenes", [])
 
     char_names = " و ".join([c.get("name_ar", "") for c in characters if c.get("name_ar")])
-    progress(f"🎨 تم تثبيت أبطال القة: {char_names} ({len(scenes)} مشاهد متسلسلة)")
+    progress(f"🎨 تم تحديد أبطال القصة: {char_names} ({len(scenes)} مشاهد متسلسلة)")
 
     episode_dir = OUTPUT_DIR / f"universal_{_safe_name(title)}_{int(time.time())}"
     episode_dir.mkdir(parents=True, exist_ok=True)
 
+    # المرحلة 1.5: رسم صورة الشخصيات المرجعية ثلاثية الأبعاد (Character Reference)
+    progress("🎨 رسم وتثبيت هوية وملامح الشخصيات ثلاثية الأبعاد (Character Design)...")
+    char_ref_path = episode_dir / "character_concept.png"
+    has_ref_image = False
+    try:
+        from tools.gemini_tool import generate_universal_character_image
+        generate_universal_character_image(plan=plan, output_path=char_ref_path)
+        has_ref_image = char_ref_path.exists() and char_ref_path.stat().st_size > 0
+        if has_ref_image:
+            progress("✅ تم تثبيت ملامح الشخصيات بنجاح! جاري تحريك المشاهد انطلاقاً من نفس الصورة...")
+    except Exception as e:
+        logger.warning(f"Could not generate character ref image: {e}")
+
     generated_scenes = []
 
-    # 2. المرحلة الثانية: تصوير المشاهد مشهداً تلو الآخر بحركة 3D
+    # 2. المرحلة الثانية: تصوير المشاهد مشهداً تلو الآخر بحركة 3D من نفس الصورة
     for i, sc in enumerate(scenes):
         sc_num = i + 1
         action_ar = sc.get("action_ar", "")
@@ -66,6 +79,7 @@ def produce_universal_episode(idea: str = None, on_progress=None) -> Tuple[Path,
         try:
             generate_video_minimax(
                 prompt=f"{v_prompt}. High quality fluid motion, rich volumetric lighting, cinematic animation.",
+                first_frame_image=char_ref_path if has_ref_image else None,
                 output_path=out_scene_file,
                 on_progress=lambda m: progress(f"  [المشهد {sc_num}] {m}")
             )
@@ -119,4 +133,4 @@ def produce_universal_episode(idea: str = None, on_progress=None) -> Tuple[Path,
         final_output = merged_raw
 
     progress(f"✅ اكتمل إنتاج الحلقة بالكامل بنجاح! 🏆 جاهزة للعرض والمشاركة!")
-    return final_output, plan
+    return final_output, plan, (char_ref_path if has_ref_image else None)

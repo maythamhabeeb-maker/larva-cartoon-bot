@@ -183,6 +183,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     loop = asyncio.get_event_loop()
     plan_data = None
+    char_ref_path = None
 
     def safe_progress(msg: str):
         try:
@@ -193,7 +194,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     try:
         if mode == "long_episode":
             from tools.universal_studio_generator import produce_universal_episode
-            video_path, plan_data = await loop.run_in_executor(
+            video_path, plan_data, char_ref_path = await loop.run_in_executor(
                 None,
                 lambda: produce_universal_episode(
                     idea=idea,
@@ -213,6 +214,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
         await status_msg.edit_text("✅ اكتمل المونتاج بنجاح! جاري رفع الحلقة الآن إلى تليجرام... 🚀")
 
+        # إرسال صورة الشخصيات المرجعية أولاً إذا كانت متوفرة
+        if char_ref_path and Path(char_ref_path).exists():
+            try:
+                with open(char_ref_path, "rb") as pf:
+                    await update.message.reply_photo(
+                        photo=pf,
+                        caption="🎨 **التصميم المعتمد لأبطال القصة (Character Concept Art)**\nتم تثبيت ملامحهم وهويتهم ثلاثية الأبعاد وتحريك مشاهد الحلقة انطلاقاً من هذه الصورة لضمان تطابقهم 100%."
+                    )
+            except Exception as e:
+                logger.warning(f"Error sending character photo: {e}")
+
         # إرسال الفيديو النهائي مع كابشن مخصص ومفصل
         if mode == "long_episode" and plan_data:
             title = plan_data.get("title_ar", "حلقة كارتون كاملة")
@@ -222,7 +234,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 f"🎬 **«{title}» (حلقة كاملة متكاملة)**\n\n"
                 f"👥 أبطال الحلقة: {chars if chars else 'أبطال الكارتون'}\n"
                 f"🎞️ عدد المشاهد: {scenes_count} مشاهد كارتونية متسلسلة ومدمجة\n\n"
-                "🍿 حركة 3D سينمائية حقيقية بالكامل (مو صور).\n"
+                "🍿 حركة 3D سينمائية حقيقية من نفس صورة الأبطال.\n"
                 "🔊 هندسة أصوات الحركات والضربات + الموسيقى التصويرية الكارتونية."
             )
         else:
