@@ -21,9 +21,34 @@ def is_runpod_available(url: str = None) -> bool:
     except Exception:
         return False
 
+def translate_and_enhance_prompt(arabic_text: str) -> str:
+    """Translate and expand Arabic ideas into rich English 3D Pixar prompts."""
+    # If text is already mostly English, return it
+    if not any('\u0600' <= char <= '\u06FF' for char in arabic_text):
+        return arabic_text
+    try:
+        from config import GEMINI_API_KEY
+        from google import genai
+        client = genai.Client(api_key=GEMINI_API_KEY)
+        instruction = (
+            f"You are an expert prompt engineer. Convert this Arabic cartoon idea into a rich English prompt for 3D Pixar cartoon style: '{arabic_text}'. "
+            "Output ONLY the final English prompt, no quotes, no markdown, no other words."
+        )
+        resp = client.models.generate_content(model="gemini-3.8-flash", contents=instruction)
+        text = resp.text.strip().strip('"').strip("'").strip("`").strip("*")
+        if ":" in text and len(text.split(":")[0]) < 30:
+            text = text.split(":", 1)[1].strip().strip('"').strip("*")
+        return text if text else arabic_text
+    except Exception as e:
+        logger.warning(f"Translation error: {e}")
+        return arabic_text
+
 def generate_character_on_runpod(prompt_text: str, output_path: str, url: str = None) -> str:
     """Generate high quality 3D Pixar character concept using DreamShaper on RTX 4090."""
     target_url = url or RUNPOD_COMFY_URL
+    
+    # Automatically translate any Arabic to detailed English prompt
+    final_prompt = translate_and_enhance_prompt(prompt_text)
     
     prompt = {
         "1": {
@@ -34,7 +59,7 @@ def generate_character_on_runpod(prompt_text: str, output_path: str, url: str = 
         },
         "2": {
             "inputs": {
-                "text": f"3D Pixar Disney style character, {prompt_text}, cute expressive eyes, soft studio lighting, octane render, 8k masterpiece",
+                "text": f"3D Pixar Disney style character, {final_prompt}, cute expressive eyes, soft studio lighting, octane render, 8k masterpiece",
                 "clip": ["1", 1]
             },
             "class_type": "CLIPTextEncode"
