@@ -10,7 +10,10 @@ import imageio
 logger = logging.getLogger(__name__)
 
 # RunPod ComfyUI Settings
-RUNPOD_COMFY_URL = os.environ.get("RUNPOD_COMFY_URL", "https://3x1kx5x27ttiq1-8188.proxy.runpod.net")
+try:
+    from config import RUNPOD_COMFY_URL
+except Exception:
+    RUNPOD_COMFY_URL = os.environ.get("RUNPOD_COMFY_URL", "https://gtja6z9ul4samw-8188.proxy.runpod.net")
 
 def is_runpod_available(url: str = None) -> bool:
     """Check if RunPod ComfyUI server is reachable and active."""

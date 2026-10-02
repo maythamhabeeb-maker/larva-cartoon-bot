@@ -241,7 +241,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         if mode == "runpod_gpu":
             from tools.runpod_comfy_tool import generate_character_on_runpod, generate_video_on_runpod, add_cartoon_audio
             import time
-            safe_progress("⚡ 1/3: جاري الاتصال بكارت الشاشة RTX 4090 ورسم شخصيات المشهد بدقة بيكسار...")
+            safe_progress("⚡ 1/3: جاري الاتصال بكارت الشاشة RTX 4090 ورسم شخصيات المشهد بدقة 4K بيكسار...")
             run_id = int(time.time())
             char_ref_path = f"output/runpod_char_{run_id}.png"
             char_prompt = idea if idea else "3D Pixar cartoon cute baby dragon and curious round owl"
@@ -249,11 +249,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 None,
                 lambda: generate_character_on_runpod(char_prompt, char_ref_path)
             )
-            safe_progress("🎨 2/3: تم إنشاء وتثبيت هوية الشخصيات! جاري تحريك المشهد فيديو بواسطة SVD على الـ RTX 4090...")
+            safe_progress("🎬 2/3: تم إنشاء هوية الشخصيات! جاري إنتاج حركة سينمائية فائقة الوضوح عبر موديل Wan 2.1...")
             raw_video_path = f"output/runpod_raw_{run_id}.mp4"
             await loop.run_in_executor(
                 None,
-                lambda: generate_video_on_runpod(char_ref_path, raw_video_path)
+                lambda: generate_video_on_runpod(char_ref_path, raw_video_path, prompt_text=char_prompt)
             )
             safe_progress("🔊 3/3: جاري إضافة المؤثرات الصوتية والموسيقى التصويرية الكارتونية...")
             final_video_path = f"output/runpod_video_{run_id}.mp4"
@@ -274,7 +274,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             # كافة الأنماط الأخرى تعمل 100% على كارت الشاشة RTX 4090 وبدون أي تكلفة خارجية
             from tools.runpod_comfy_tool import generate_character_on_runpod, generate_video_on_runpod, add_cartoon_audio
             import time
-            safe_progress("⚡ 1/3: جاري رسم وتصميم المشهد على كارت الشاشة RTX 4090...")
+            safe_progress("⚡ 1/3: جاري رسم وتصميم أبطال المشهد بدقة 4K على كارت الشاشة RTX 4090...")
             run_id = int(time.time())
             char_ref_path = f"output/runpod_char_{run_id}.png"
             char_prompt = idea if idea else "cute 3d cartoon character"
@@ -282,11 +282,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 None,
                 lambda: generate_character_on_runpod(char_prompt, char_ref_path)
             )
-            safe_progress("🎨 2/3: جاري تحريك الفيديو بنموذج SVD على كارت الـ RTX 4090...")
+            safe_progress("🎬 2/3: جاري إنتاج حركة سينمائية فائقة الوضوح عبر موديل Wan 2.1 على كارت الـ RTX 4090...")
             raw_video_path = f"output/runpod_raw_{run_id}.mp4"
             await loop.run_in_executor(
                 None,
-                lambda: generate_video_on_runpod(char_ref_path, raw_video_path)
+                lambda: generate_video_on_runpod(char_ref_path, raw_video_path, prompt_text=char_prompt)
             )
             safe_progress("🔊 3/3: جاري تركيب المؤثرات الصوتية والموسيقى التصويرية...")
             final_video_path = f"output/runpod_video_{run_id}.mp4"
