@@ -181,4 +181,39 @@ def generate_universal_character_image(plan: dict, output_path: Path) -> Path:
 
     raise RuntimeError("Failed to generate character reference image.")
 
+def generate_scene_keyframe(plan: dict, scene: dict, output_path: Path) -> Path:
+    """توليد صورة كادر المشهد المحددة بأسلوب بيكسار انطلاقاً من السيناريو وهوية الشخصيات."""
+    client = get_gemini_client()
+    
+    chars_desc = ". ".join([
+        f"{c.get('name_en', c.get('name_ar', 'Character'))}: {c.get('visual_identity', '')}"
+        for c in plan.get("characters", [])
+    ])
+    v_prompt = scene.get("visual_prompt_en", "")
+    
+    prompt = (
+        f"Masterpiece 3D Pixar movie scene still: {v_prompt}. "
+        f"Consistent characters: {chars_desc}. "
+        "Disney Pixar 3D animation style, adorable expressive faces, cinematic volumetric lighting, "
+        "Octane 3D CGI rendering, highly detailed textures, vibrant magical colors, 8k resolution, widescreen 16:9, crystal clear focus."
+    )
+    
+    logger.info(f"Generating Scene {scene.get('scene_num', 1)} Keyframe with Gemini...")
+    
+    response = client.models.generate_content(
+        model="gemini-3.1-flash-image",
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            response_modalities=["IMAGE", "TEXT"],
+        ),
+    )
+    for part in response.candidates[0].content.parts:
+        if hasattr(part, "inline_data") and part.inline_data:
+            output_path.write_bytes(part.inline_data.data)
+            logger.info(f"Scene keyframe saved! ({len(part.inline_data.data)//1024} KB)")
+            return output_path
+            
+    raise RuntimeError(f"Failed to generate scene keyframe for scene {scene.get('scene_num')}")
+
+
 
