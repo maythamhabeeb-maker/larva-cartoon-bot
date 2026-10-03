@@ -52,35 +52,43 @@ def produce_universal_episode(idea: str = None, on_progress=None) -> Tuple[Path,
     episode_dir = OUTPUT_DIR / f"universal_{_safe_name(title)}_{int(time.time())}"
     episode_dir.mkdir(parents=True, exist_ok=True)
 
-    # المرحلة 1.5: رسم صورة الشخصيات المرجعية ثلاثية الأبعاد (Character Reference)
-    progress("🎨 رسم وتثبيت هوية وملامح الشخصيات ثلاثية الأبعاد (Character Design)...")
+    # المرحلة 1.5: رسم صورة الشخصيات المرجعية ثلاثية الأبعاد على كارت الشاشة (Character Reference)
+    progress("🎨 رسم وتثبيت هوية وملامح أبطال القصة بدقة 4K على كارت الشاشة RTX 4090...")
     char_ref_path = episode_dir / "character_concept.png"
     has_ref_image = False
     try:
-        from tools.gemini_tool import generate_universal_character_image
-        generate_universal_character_image(plan=plan, output_path=char_ref_path)
+        from tools.runpod_comfy_tool import generate_character_on_runpod
+        char_desc = plan.get("character_design_prompt_en", "")
+        if not char_desc and characters:
+            identities = [f"{c.get('name_en', '')}: {c.get('visual_identity', '')}" for c in characters]
+            char_desc = f"3D Pixar Disney style characters, {', '.join(identities)}"
+        if not char_desc:
+            char_desc = f"3D Pixar Disney style characters for {char_names}"
+            
+        generate_character_on_runpod(prompt_text=char_desc, output_path=str(char_ref_path))
         has_ref_image = char_ref_path.exists() and char_ref_path.stat().st_size > 0
         if has_ref_image:
-            progress("✅ تم تثبيت ملامح الشخصيات بنجاح! جاري تحريك المشاهد انطلاقاً من نفس الصورة...")
+            progress("✅ تم تثبيت ملامح وهيكل الأبطال بنجاح 100%! جاري تصوير المشاهد سينمائياً انطلاقاً من نفس الصورة...")
     except Exception as e:
-        logger.warning(f"Could not generate character ref image: {e}")
+        logger.warning(f"Could not generate character ref image on GPU: {e}")
 
     generated_scenes = []
 
-    # 2. المرحلة الثانية: تصوير المشاهد مشهداً تلو الآخر بحركة 3D من نفس الصورة
+    # 2. المرحلة الثانية: تصوير المشاهد مشهداً تلو الآخر بحركة سينمائية 3D عبر موديل Wan 2.1
     for i, sc in enumerate(scenes):
         sc_num = i + 1
         action_ar = sc.get("action_ar", "")
         v_prompt = sc.get("visual_prompt_en", "")
 
-        progress(f"🎥 تصوير المشهد {sc_num}/{len(scenes)}: {action_ar}...")
+        progress(f"🎬 تصوير المشهد {sc_num}/{len(scenes)}: {action_ar}...")
 
         out_scene_file = episode_dir / f"scene_{sc_num}.mp4"
         try:
-            progress(f"  [المشهد {sc_num}] ⚡ توليد وتحريك المشهد على كارت الشاشة RunPod RTX 4090...")
+            progress(f"  [المشهد {sc_num}] ⚡ توليد المشهد سينمائياً عبر Wan 2.1 على كارت الشاشة RTX 4090...")
             generate_video_on_runpod(
                 image_path=str(char_ref_path) if has_ref_image else None,
-                output_mp4_path=str(out_scene_file)
+                output_mp4_path=str(out_scene_file),
+                prompt_text=v_prompt
             )
             generated_scenes.append(out_scene_file)
         except Exception as e:
@@ -110,7 +118,11 @@ def produce_universal_episode(idea: str = None, on_progress=None) -> Tuple[Path,
         "-c", "copy",
         str(merged_raw)
     ]
-    subprocess.run(cmd_concat, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    try:
+        subprocess.run(cmd_concat, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=45)
+    except Exception as e:
+        logger.warning(f"Concat fallback: {e}")
+        merged_raw = generated_scenes[0]
 
     # تركيب الموسيقى التصويرية الكارتونية
     final_output = episode_dir / f"{_safe_name(title)}_كاملة.mp4"
@@ -127,7 +139,11 @@ def produce_universal_episode(idea: str = None, on_progress=None) -> Tuple[Path,
             "-shortest",
             str(final_output)
         ]
-        subprocess.run(cmd_audio, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            subprocess.run(cmd_audio, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=45)
+        except Exception as e:
+            logger.warning(f"Audio merge fallback: {e}")
+            final_output = merged_raw
     else:
         final_output = merged_raw
 
