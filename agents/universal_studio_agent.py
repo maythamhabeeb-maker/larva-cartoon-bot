@@ -58,7 +58,7 @@ Analyze the user's idea and generate a strictly valid JSON response with the fol
 }
 
 Rules:
-1. When generating a full movie or episode, generate exactly 10 continuous scenes that tell an engaging, complete story arc (1: Opening, 2: Meet heroes, 3: Discovery, 4: Rising curiosity, 5: The surprise/gag, 6: Funny reaction, 7: Climax, 8: Turning point/solution, 9: Celebration, 10: Outro/Ending).
+1. When generating a full movie or episode, generate exactly 5 continuous scenes that tell an engaging, complete story arc (1: Opening & meeting heroes, 2: Discovery, 3: Rising curiosity & gag, 4: Climax action, 5: Celebration & happy ending).
 2. Character consistency: Every scene's `visual_prompt_en` must explicitly repeat the exact character traits established in `characters`.
 3. If it's a silent slapstick cartoon (like Larva / Tom & Jerry), leave `dialogue_ar` empty and emphasize funny physical squash-and-stretch comedy and SFX cues. If dialogue/story is requested, write warm, natural Arabic dialogue in `dialogue_ar`.
 4. Output ONLY valid JSON, no markdown outside or explanatory text.
