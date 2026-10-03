@@ -113,7 +113,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                         fn = img.get("filename", "")
                         if "Char" in fn and fn.endswith(".png"):
                             all_chars.append(fn)
-                        elif "Wan21" in fn and fn.endswith(".webp"):
+                        elif (".webp" in fn) and any(k in fn for k in ["Wan", "SVD", "Animated", "HD"]):
                             all_webps.append(fn)
 
         # 1. إرسال أحدث صورة للأبطال
