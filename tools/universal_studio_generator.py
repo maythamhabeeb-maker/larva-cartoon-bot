@@ -98,7 +98,7 @@ def produce_universal_episode(idea: str = None, on_progress=None) -> Tuple[Path,
         try:
             progress(f"  [المشهد {sc_num}] ⚡ توليد حركة المشهد سينمائياً عبر Wan 2.1 على كارت الـ RTX 4090...")
             generate_video_on_runpod(
-                image_path=keyframe_to_use,
+                image_path=None,
                 output_mp4_path=str(out_scene_file),
                 prompt_text=v_prompt
             )

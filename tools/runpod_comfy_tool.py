@@ -255,21 +255,6 @@ def generate_video_on_runpod(image_path: str, output_mp4_path: str, prompt_text:
         }
     }
     
-    # If a character image is provided, link it to guide Wan
-    if image_path and os.path.exists(image_path):
-        try:
-            server_img_name = upload_image_to_runpod(image_path, target_url)
-            workflow["10"] = {
-                "inputs": {
-                    "image": server_img_name,
-                    "upload": "image"
-                },
-                "class_type": "LoadImage"
-            }
-            workflow["6"]["inputs"]["start_image"] = ["10", 0]
-        except Exception as e:
-            logger.warning(f"Could not attach start_image to Wan: {e}")
-    
     r = requests.post(f"{target_url}/prompt", json={"prompt": workflow}, timeout=15)
     if r.status_code != 200:
         raise RuntimeError(f"RunPod Wan 2.1 error: {r.text}")
@@ -278,13 +263,18 @@ def generate_video_on_runpod(image_path: str, output_mp4_path: str, prompt_text:
     
     # Poll for completion (Wan 2.1 81 frames takes ~60-80s on RTX 4090)
     webp_bytes = None
-    for _ in range(180):
+    for _ in range(60):
         time.sleep(2)
         try:
             hr = requests.get(f"{target_url}/history/{prompt_id}", timeout=10)
             hdata = hr.json()
             if prompt_id in hdata:
-                outputs = hdata[prompt_id].get("outputs", {})
+                p_info = hdata[prompt_id]
+                status_info = p_info.get("status", {})
+                if status_info.get("status_str") == "error":
+                    msgs = status_info.get("messages", [])
+                    raise RuntimeError(f"ComfyUI execution error: {msgs}")
+                outputs = p_info.get("outputs", {})
                 for nid, out in outputs.items():
                     if "images" in out and out["images"]:
                         fn = out["images"][0]["filename"]
@@ -297,6 +287,8 @@ def generate_video_on_runpod(image_path: str, output_mp4_path: str, prompt_text:
                 if webp_bytes:
                     break
         except Exception as e:
+            if "ComfyUI execution error" in str(e):
+                raise
             logger.warning(f"Error checking history: {e}")
             
     if not webp_bytes:
