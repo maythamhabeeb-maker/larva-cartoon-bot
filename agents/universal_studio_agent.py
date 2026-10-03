@@ -47,19 +47,20 @@ Analyze the user's idea and generate a strictly valid JSON response with the fol
   "scenes": [
     {
       "scene_num": 1,
-      "act": "المقدمة والبداية",
+      "act": "المقدمة والافتتاحية",
       "action_ar": "وصف ما تفعله الشخصيات في هذا المشهد بالعربي",
       "visual_prompt_en": "Masterpiece 3D CGI animated shot in Pixar/Disney style: (combine the exact character visual identities above, the environment, dynamic action, facial expressions, camera movement, and volumetric lighting)",
+      "dialogue_ar": "الحوار أو الجملة التي تنطق بها الشخصية بالعربي، أو تركه فارغاً إذا كان المشهد صامت ومقلب",
       "sfx_cue": "whoosh / boing / bonk / splat / flutter / spark / gasp / whistle",
-      "duration": 6.0
+      "duration": 5.0
     }
   ]
 }
 
 Rules:
-1. Ensure exactly 3 or 4 continuous scenes that tell a complete mini-story from beginning to climax to resolution.
+1. When generating a full movie or episode, generate exactly 10 continuous scenes that tell an engaging, complete story arc (1: Opening, 2: Meet heroes, 3: Discovery, 4: Rising curiosity, 5: The surprise/gag, 6: Funny reaction, 7: Climax, 8: Turning point/solution, 9: Celebration, 10: Outro/Ending).
 2. Character consistency: Every scene's `visual_prompt_en` must explicitly repeat the exact character traits established in `characters`.
-3. If it's a silent slapstick cartoon, ensure funny physical comedy, squash-and-stretch elasticity, and slapstick reactions with no dialogue.
+3. If it's a silent slapstick cartoon (like Larva / Tom & Jerry), leave `dialogue_ar` empty and emphasize funny physical squash-and-stretch comedy and SFX cues. If dialogue/story is requested, write warm, natural Arabic dialogue in `dialogue_ar`.
 4. Output ONLY valid JSON, no markdown outside or explanatory text.
 """
 

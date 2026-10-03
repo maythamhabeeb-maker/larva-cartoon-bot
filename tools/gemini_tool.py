@@ -38,6 +38,20 @@ def generate_text(prompt: str, temperature: float = 0.7) -> str:
     return completion.choices[0].message.content.strip()
 
 def generate_json(prompt: str) -> dict | list:
+    try:
+        client = get_gemini_client()
+        response = client.models.generate_content(
+            model="gemini-3.8-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.4,
+            ),
+        )
+        return json.loads(response.text.strip())
+    except Exception as e:
+        logger.warning(f"Gemini JSON generation error: {e}, attempting Groq...")
+        
     client = get_groq_client()
     full_prompt = (
         prompt

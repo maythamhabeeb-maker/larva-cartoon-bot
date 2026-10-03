@@ -90,6 +90,32 @@ def produce_universal_episode(idea: str = None, on_progress=None) -> Tuple[Path,
                 output_mp4_path=str(out_scene_file),
                 prompt_text=v_prompt
             )
+            
+            # إذا كان المشهد يحتوي على حوار صوتي ناطق للشخصيات
+            dialogue = sc.get("dialogue_ar", "").strip()
+            if dialogue:
+                try:
+                    from tools.tts_tool import text_to_speech
+                    voice_file = episode_dir / f"voice_{sc_num}.mp3"
+                    text_to_speech(dialogue, "ar", voice_file)
+                    if voice_file.exists() and voice_file.stat().st_size > 0:
+                        dubbed_file = episode_dir / f"dubbed_{sc_num}.mp4"
+                        ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+                        cmd_dub = [
+                            ffmpeg_exe, "-y",
+                            "-i", str(out_scene_file),
+                            "-i", str(voice_file),
+                            "-c:v", "copy",
+                            "-c:a", "aac",
+                            "-shortest",
+                            str(dubbed_file)
+                        ]
+                        subprocess.run(cmd_dub, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=20)
+                        if dubbed_file.exists() and dubbed_file.stat().st_size > 0:
+                            out_scene_file = dubbed_file
+                except Exception as ex_dub:
+                    logger.warning(f"Voice dubbing fallback for scene {sc_num}: {ex_dub}")
+                    
             generated_scenes.append(out_scene_file)
         except Exception as e:
             logger.error(f"Error producing scene {sc_num}: {e}")
